@@ -18,7 +18,7 @@ export class RoomController {
   }
 
   @Post()
-  addRoom(@Body() room) {
+  addRoom(@Body() room: { name: string; topic: string }) {
     return this.roomService.create(room);
   }
 }

@@ -7,21 +7,36 @@ import { Plus, Users } from 'lucide-react'
 import { useState } from 'react'
 
 interface IRoomFormProps {
-  onCreateRoom: ({ name, topic }: { name: string; topic: string }) => void
+  onCreateRoom: (name: string, topic: string) => void
   onJoinRoom: (name: string, roomCode: string) => void
+  setMode: (mode: 'create' | 'join') => void
+  mode: 'create' | 'join'
+  name: string
+  setName: (name: string) => void
+  topic: string
+  setTopic: (topic: string) => void
+  roomCode: string
+  setRoomCode: (roomCode: string) => void
 }
-export function RoomForm({ onCreateRoom, onJoinRoom }: IRoomFormProps) {
-  const [mode, setMode] = useState<'create' | 'join'>('create')
-  const [name, setName] = useState('')
-  const [topic, setTopic] = useState('')
-  const [roomCode, setRoomCode] = useState('')
+export function RoomForm({
+  onCreateRoom,
+  onJoinRoom,
+  setMode,
+  mode,
+  name,
+  setName,
+  topic,
+  setTopic,
+  roomCode,
+  setRoomCode,
+}: IRoomFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) return
 
     if (mode === 'create') {
       if (!topic.trim()) return
-      onCreateRoom({ name: name.trim(), topic: topic.trim() })
+      onCreateRoom(name.trim(), topic.trim())
     } else {
       if (!roomCode.trim()) return
       onJoinRoom(name.trim(), roomCode.trim().toUpperCase())

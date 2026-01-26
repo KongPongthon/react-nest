@@ -1,4 +1,8 @@
-import { Scripts, createRootRouteWithContext } from '@tanstack/react-router'
+import {
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+} from '@tanstack/react-router'
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
@@ -13,7 +17,7 @@ import StoreDevtools from '../lib/demo-store-devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
-import { Room } from '@/page/room'
+import { WebSocketProvider } from '@/config/provider-socket'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -49,7 +53,12 @@ function RootDocument() {
     <html lang="en">
       <body className="flex flex-col h-screen w-full">
         <Header />
-        <Room />
+        <div className="md:px-20 md:py-4 h-screen w-full">
+          <WebSocketProvider>
+            <Outlet />
+          </WebSocketProvider>
+        </div>
+
         <TanStackDevtools
           config={{
             position: 'bottom-right',
