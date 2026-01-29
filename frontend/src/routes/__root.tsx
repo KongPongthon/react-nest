@@ -17,7 +17,6 @@ import StoreDevtools from '../lib/demo-store-devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
-import { WebSocketProvider } from '@/config/provider-socket'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -54,9 +53,7 @@ function RootDocument() {
       <body className="flex flex-col h-screen w-full">
         <Header />
         <div className="md:px-20 md:py-4 h-screen w-full">
-          <WebSocketProvider>
-            <Outlet />
-          </WebSocketProvider>
+          <Outlet />
         </div>
 
         <TanStackDevtools

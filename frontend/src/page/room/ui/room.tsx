@@ -1,11 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RoomForm } from './roomForm'
 import { List, Plus } from 'lucide-react'
-import { useState } from 'react'
-import { useGetRoom, usePostRoom } from '@/api/room/hook/quries'
+import { useEffect, useState } from 'react'
 import { CustomTable, TableColumn } from '@/components/Custom/Table'
 import { cn } from '@/lib/utils'
 import { useRouter } from '@tanstack/react-router'
+import { RoomCreate, RoomList, useWebSocket } from '@/hooks/useWebSocket'
+import { usePostRoom } from '@/api/room/hook/quries'
 
 export function Room() {
   const [activeTab, setActiveTab] = useState<string>('create')
@@ -13,16 +14,52 @@ export function Room() {
   const [name, setName] = useState('')
   const [topic, setTopic] = useState('')
   const [roomCode, setRoomCode] = useState('')
-  const getRoolALl = useGetRoom()
-  const postRoom = usePostRoom()
-  const { data: rooms } = getRoolALl
+  const [rooms, setRooms] = useState<RoomList[]>([])
+  const [loading, setLoading] = useState(true)
   const router = useRouter()
+  const createRoom = usePostRoom()
+  const { on, reconnect, isConnected, send } = useWebSocket()
+
   const handleSelectRoom = (id: number | string) => {
     router.navigate({
       to: `/room/${id}`,
     })
   }
 
+  useEffect(() => {
+    const unsubscribeList = on('rooms-list', (roomsList: RoomList[]) => {
+      console.log('📋 Received rooms list:', roomsList)
+      setRooms(roomsList)
+      setLoading(false)
+    })
+
+    const unsubscribeCreated = on('room-created', (newRoom: RoomCreate) => {
+      console.log('✨ New room created:', newRoom)
+
+      const roomListItem: RoomList = {
+        id: newRoom.id,
+        nameCode: newRoom.nameCode,
+      }
+
+      setRooms((prev) => [...prev, roomListItem])
+    })
+
+    const unsubscribeDeleted = on('room-deleted', (roomId: number) => {
+      console.log('🗑️ Room deleted:', roomId)
+      setRooms((prev) => prev.filter((room) => room.id !== roomId))
+    })
+
+    const unsubscribeError = on('error', (error: { message: string }) => {
+      alert(error.message)
+    })
+
+    return () => {
+      unsubscribeList()
+      unsubscribeCreated()
+      unsubscribeDeleted()
+      unsubscribeError()
+    }
+  }, [on])
   const handleJoinRoom = (name: string, roomCode: string) => {
     try {
       console.log('name', name, roomCode)
@@ -30,12 +67,13 @@ export function Room() {
       console.log(error)
     }
   }
-  const handleCreateRoom = async (name: string, topic: string) => {
+  const handleCreateRoom = () => {
     try {
-      console.log('name', name, topic)
-      if (!name || !topic) return
-
-      await postRoom.mutateAsync({ name, topic })
+      createRoom.mutate({
+        name,
+        nameRoom: topic,
+        password: roomCode,
+      })
     } catch (error) {
       console.log(error)
     }
@@ -50,6 +88,21 @@ export function Room() {
     setRoomCode('')
 
     setMode(value)
+  }
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>กำลังโหลด...</p>
+        {/* ✅ ปุ่ม Reconnect */}
+        {!isConnected && (
+          <button onClick={reconnect} className="reconnect-button">
+            🔄 เชื่อมต่อใหม่
+          </button>
+        )}
+      </div>
+    )
   }
   return (
     <div className="h-full min-h-screen w-full flex justify-center items-center">
@@ -96,10 +149,10 @@ export function Room() {
               columns={
                 [
                   {
-                    key: 'name',
-                    name: 'name',
+                    key: 'nameCode',
+                    name: 'ชื่อห้อง',
                   },
-                ] as TableColumn<{ name: string }>[]
+                ] as TableColumn<{ nameCode: string }>[]
               }
               page={0}
               rowsPerPage={10}
