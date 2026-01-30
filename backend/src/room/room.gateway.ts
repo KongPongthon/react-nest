@@ -79,9 +79,9 @@ export class RoomsGateway
         //   this.handleCreateRoom(client, message.data);
         //   break;
 
-        // case 'join-room':
-        //   this.handleJoinRoom(client, message.data);
-        //   break;
+        case 'join-room':
+          this.joinRoom(client, message.data);
+          break;
 
         case 'delete-room':
           this.handleDeleteRoom(client, message.data);
@@ -129,6 +129,26 @@ export class RoomsGateway
       event: event,
       data: data,
     });
+  }
+
+  private joinRoom(client: WebSocket, data: JoinRoomDto) {
+    try {
+      const room = this.roomsService.joinRoom(parseInt(data.roomId));
+      if (!room) {
+        this.sendToClient(client, {
+          event: 'error',
+          data: { message: 'ไม่พบห้องนี้' },
+        });
+        return;
+      }
+
+      this.sendToClient(client, {
+        event: 'join-room',
+        data: data,
+      });
+    } catch (error) {
+      this.logger.error('Error joining room:', error);
+    }
   }
 
   private handleDeleteRoom(client: WebSocket, data: DeleteRoomDto) {

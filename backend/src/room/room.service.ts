@@ -1,79 +1,45 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RoomCreate, RoomList } from './room.interface';
-import { CreateRoomDto } from './room.dto';
-import { RoomsGateway } from './room.gateway';
+import { RoomStateService } from './room-state.service';
 
 @Injectable()
 export class RoomService {
   private readonly logger = new Logger(RoomService.name);
-  private roomsMap = new Map<number, RoomCreate>();
 
-  constructor(
-    @Inject(forwardRef(() => RoomsGateway)) // ต้องใส่ forwardRef ตรงนี้
-    private readonly roomsGateway: RoomsGateway,
-  ) {
-    // ข้อมูลเริ่มต้น
-    const room1: RoomCreate = {
-      id: 1,
-      nameCode: 'ROOM-ABC123',
-      name: 'ห้อง A',
-      password: undefined,
-      listMember: null,
-    };
-    const room2: RoomCreate = {
-      id: 2,
-      nameCode: 'ROOM-XYZ789',
-      name: 'ห้อง B',
-      password: '1234',
-      listMember: null,
-    };
-
-    this.roomsMap.set(1, room1);
-    this.roomsMap.set(2, room2);
-
-    this.logger.log('✅ RoomsService initialized with 2 rooms');
-  }
+  constructor(private readonly state: RoomStateService) {}
 
   getAllRooms(): RoomList[] {
-    return Array.from(this.roomsMap.values()).map((room) => ({
+    return Array.from(this.state.rooms.values()).map((room) => ({
       id: room.id,
-      nameCode: room.nameCode,
+      roomCode: room.roomCode,
     }));
   }
 
-  getRoomById(roomId: number): RoomCreate | undefined {
-    return this.roomsMap.get(roomId);
+  getRoomById(roomId: string): RoomCreate | undefined {
+    return this.state.rooms.get(roomId);
   }
 
-  joinRoom(roomId: number): RoomCreate | undefined {
-    const room = this.roomsMap.get(roomId);
+  joinRoom(roomId: string): RoomCreate | undefined {
+    const room = this.state.rooms.get(roomId);
     if (!room) return undefined;
-
-    if (room.listMember) return undefined;
-
-    room.listMember = [roomId];
     return room;
   }
 
-  createRoom(createRoomDto: CreateRoomDto): RoomCreate {
+  createRoom(): RoomCreate {
     const roomId = Date.now();
 
     const newRoom: RoomCreate = {
       id: roomId,
-      nameCode: this.generateRoomCode(),
-      name: createRoomDto.name,
-      password: createRoomDto.password,
-      listMember: null,
+      roomCode: this.generateRoomCode(),
     };
 
-    this.roomsMap.set(roomId, newRoom);
-    this.logger.log(`🏠 Created room: ${newRoom.nameCode}`);
-    this.roomsGateway.handleNotifyUpdate('room-created', newRoom);
+    this.state.rooms.set(roomId.toString(), newRoom);
+    this.logger.log(`🏠 Created room: ${newRoom.roomCode}`);
     return newRoom;
   }
 
-  deleteRoom(roomId: number): boolean {
-    const deleted = this.roomsMap.delete(roomId);
+  deleteRoom(roomId: string): boolean {
+    const deleted = this.state.rooms.delete(roomId);
     if (deleted) {
       this.logger.log(`🗑️ Deleted room: ${roomId}`);
     }
@@ -81,7 +47,7 @@ export class RoomService {
   }
 
   verifyRoomPassword(roomId: number, password?: string): boolean {
-    const room = this.roomsMap.get(roomId);
+    const room = this.state.rooms.get(roomId);
     if (!room) return false;
     if (!room.password) return true;
     return room.password === password;
