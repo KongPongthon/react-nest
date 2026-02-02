@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { RoomCreate, RoomList } from './room.interface';
+import { RoomList, Rooms } from './room.interface';
 import { RoomStateService } from './room-state.service';
 
 @Injectable()
@@ -9,32 +9,53 @@ export class RoomService {
   constructor(private readonly state: RoomStateService) {}
 
   getAllRooms(): RoomList[] {
-    return Array.from(this.state.rooms.values()).map((room) => ({
-      id: room.id,
-      roomCode: room.roomCode,
-    }));
+    console.log(
+      'this',
+      typeof this.state,
+      Array.from(this.state.rooms.values()),
+    );
+    const response: RoomList[] = [];
+
+    for (const room of this.state.rooms.values()) {
+      response.push({
+        id: room.id,
+        roomCode: room.roomCode,
+      });
+    }
+    return response;
   }
 
-  getRoomById(roomId: string): RoomCreate | undefined {
-    return this.state.rooms.get(roomId);
-  }
+  joinRoom(id: string): Rooms | undefined {
+    console.log('ID Join >>>>', id);
 
-  joinRoom(roomId: string): RoomCreate | undefined {
-    const room = this.state.rooms.get(roomId);
+    const room = Array.from(this.state.rooms.values()).find(
+      (r) => r.id === +id,
+    );
+    console.log('testJoinroom', room);
+
     if (!room) return undefined;
     return room;
   }
 
-  createRoom(): RoomCreate {
+  createRoom(): Rooms {
     const roomId = Date.now();
+    console.log('roomID', roomId);
 
-    const newRoom: RoomCreate = {
+    const newRoom: Rooms = {
       id: roomId,
       roomCode: this.generateRoomCode(),
+      createdAt: new Date().toISOString(),
+      createdBy: 'admin',
+      updateAt: new Date().toISOString(),
+      updateBy: 'admin',
+      isClosed: false,
     };
 
     this.state.rooms.set(roomId.toString(), newRoom);
     this.logger.log(`🏠 Created room: ${newRoom.roomCode}`);
+
+    // this.state.rooms.set(roomId.toString(), newRoom);
+    // this.logger.log(`🏠 Created room: ${newRoom.roomCode}`);
     return newRoom;
   }
 
@@ -46,12 +67,12 @@ export class RoomService {
     return deleted;
   }
 
-  verifyRoomPassword(roomId: number, password?: string): boolean {
-    const room = this.state.rooms.get(roomId);
-    if (!room) return false;
-    if (!room.password) return true;
-    return room.password === password;
-  }
+  // verifyRoomPassword(roomId: number, password?: string): boolean {
+  //   const room = this.state.rooms.get(roomId);
+  //   if (!room) return false;
+  //   if (!room.password) return true;
+  //   return room.password === password;
+  // }
 
   private generateRoomCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

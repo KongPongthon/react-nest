@@ -1,12 +1,10 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { RoomForm } from './roomForm'
-import { List, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { CustomTable, TableColumn } from '@/components/Custom/Table'
 import { cn } from '@/lib/utils'
 import { useRouter } from '@tanstack/react-router'
 import { RoomCreate, RoomList, useWebSocket } from '@/hooks/useWebSocket'
-import { usePostRoom } from '@/api/room/hook/quries'
+import { useJoinRoom, usePostRoom } from '@/api/room/hook/quries'
+import { RoomForm } from './roomForm'
 
 export function Room() {
   const [activeTab, setActiveTab] = useState<string>('create')
@@ -19,12 +17,7 @@ export function Room() {
   const router = useRouter()
   const createRoom = usePostRoom()
   const { on, reconnect, isConnected, send } = useWebSocket()
-
-  const handleSelectRoom = (id: number | string) => {
-    router.navigate({
-      to: `/room/${id}`,
-    })
-  }
+  const joingRoom = useJoinRoom()
 
   useEffect(() => {
     const unsubscribeList = on('rooms-list', (roomsList: RoomList[]) => {
@@ -60,12 +53,23 @@ export function Room() {
       unsubscribeError()
     }
   }, [on])
-  const handleJoinRoom = (name: string, roomCode: string) => {
+  const handleJoinRoom = (roomCode: string) => {
     try {
       console.log('name', name, roomCode)
     } catch (error) {
       console.log(error)
     }
+  }
+  const handleSelectRoom = (id: number) => {
+    console.log('TESTID', id)
+
+    joingRoom.mutateAsync(id).then((newRoomId) => {
+      console.log('newRoomId', newRoomId)
+
+      if (newRoomId) {
+        router.navigate({ to: `/room/${newRoomId}/` })
+      }
+    })
   }
   const handleCreateRoom = () => {
     try {
@@ -82,6 +86,7 @@ export function Room() {
   const handleTab = (value: string) => {
     setActiveTab(value)
   }
+
   const handleMode = (value: 'create' | 'join') => {
     setName('')
     setTopic('')
@@ -104,65 +109,66 @@ export function Room() {
       </div>
     )
   }
+  console.log('rooms Table', rooms)
+
   return (
     <div className="h-full min-h-screen w-full flex justify-center items-center">
-      <div className="w-full h-full">
-        <Tabs value={activeTab} onValueChange={handleTab} className="">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-card border border-border">
-            <TabsTrigger
-              value="create"
-              className={`data-[state=active]:bg-primary data-[state=active]:text-primary-foreground ${
-                activeTab === 'create'
-              }`}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              สร้าง/เข้าห้อง
-            </TabsTrigger>
-            <TabsTrigger
-              value="rooms"
-              className={cn(
-                `data-[state=active]:bg-primary data-[state=active]:text-primary-foreground`,
-                activeTab === 'rooms' ? 'border' : '',
-              )}
-            >
-              <List className="w-4 h-4 mr-2" />
-              รายการห้อง ({rooms && rooms.length})
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="create" className="animate-slide-up">
-            <RoomForm
-              onCreateRoom={(name, topic) => handleCreateRoom(name, topic)}
-              onJoinRoom={(name, roomCode) => handleJoinRoom(name, roomCode)}
-              setMode={handleMode}
-              mode={mode}
-              name={name}
-              setName={setName}
-              topic={topic}
-              setTopic={setTopic}
-              roomCode={roomCode}
-              setRoomCode={setRoomCode}
-            />
-          </TabsContent>
-          <TabsContent value="rooms" className="animate-slide-up">
-            <CustomTable
-              data={rooms}
-              columns={
-                [
-                  {
-                    key: 'nameCode',
-                    name: 'ชื่อห้อง',
-                  },
-                ] as TableColumn<{ nameCode: string }>[]
-              }
-              page={0}
-              rowsPerPage={10}
-              totalItems={rooms?.length || 0}
-              handleOnChange={(id) => {
-                handleSelectRoom(id)
-              }}
-            />
-          </TabsContent>
-        </Tabs>
+      <div className="w-full h-full space-y-4">
+        <div className="flex rounded-xl bg-card border border-border p-1">
+          <button
+            onClick={() => handleTab('create')}
+            className={cn(
+              `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20`,
+              activeTab === 'create'
+                ? 'bg-primary text-primary-foreground border border-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            สร้างห้อง/เข้าห้อง
+          </button>
+          <button
+            onClick={() => handleTab('rooms')}
+            className={cn(
+              `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20 `,
+              activeTab === 'rooms'
+                ? 'bg-primary text-primary-foreground border border-primary'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            รายการห้อง ({rooms && rooms.length})
+          </button>
+        </div>
+        {activeTab === 'create' && (
+          <RoomForm
+            onCreateRoom={handleCreateRoom}
+            onJoinRoom={handleJoinRoom}
+            setMode={handleMode}
+            mode={mode}
+            roomCode={roomCode}
+            setRoomCode={setRoomCode}
+          />
+        )}
+        {activeTab === 'rooms' && (
+          <CustomTable
+            data={rooms}
+            columns={
+              [
+                {
+                  key: 'nameCode',
+                  name: 'ชื่อห้อง',
+                },
+              ] as TableColumn<{ nameCode: string }>[]
+            }
+            page={0}
+            rowsPerPage={10}
+            totalItems={rooms?.length || 0}
+            handleOnChange={(data) => {
+              console.log('ID', data)
+
+              handleSelectRoom(data.id)
+            }}
+          />
+        )}
       </div>
     </div>
   )

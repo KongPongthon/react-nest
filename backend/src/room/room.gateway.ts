@@ -8,8 +8,8 @@ import {
 import { Server, WebSocket } from 'ws';
 import { forwardRef, Inject, Logger } from '@nestjs/common';
 import { RoomService } from './room.service';
-import { RoomCreate, WebSocketMessage } from './room.interface';
-import { DeleteRoomDto, JoinRoomDto } from './room.dto';
+import { Rooms, WebSocketMessage } from './room.interface';
+import { JoinRoomDto } from './room.dto';
 
 @WebSocketGateway({
   cors: {
@@ -79,13 +79,13 @@ export class RoomsGateway
         //   this.handleCreateRoom(client, message.data);
         //   break;
 
-        case 'join-room':
-          this.joinRoom(client, message.data);
-          break;
+        // case 'join-room':
+        //   this.joinRoom(client, message.data);
+        //   break;
 
-        case 'delete-room':
-          this.handleDeleteRoom(client, message.data);
-          break;
+        // case 'delete-room':
+        //   this.handleDeleteRoom(client, message.data);
+        //   break;
 
         default:
           this.logger.warn(`Unknown event: ${message.event}`);
@@ -124,7 +124,7 @@ export class RoomsGateway
   //   }
   // }
 
-  handleNotifyUpdate(event: string, data: RoomCreate) {
+  handleNotifyUpdate(event: string, data: Rooms) {
     this.broadcast({
       event: event,
       data: data,
@@ -133,7 +133,7 @@ export class RoomsGateway
 
   private joinRoom(client: WebSocket, data: JoinRoomDto) {
     try {
-      const room = this.roomsService.joinRoom(parseInt(data.roomId));
+      const room = this.roomsService.joinRoom(data.roomId);
       if (!room) {
         this.sendToClient(client, {
           event: 'error',
@@ -148,30 +148,6 @@ export class RoomsGateway
       });
     } catch (error) {
       this.logger.error('Error joining room:', error);
-    }
-  }
-
-  private handleDeleteRoom(client: WebSocket, data: DeleteRoomDto) {
-    try {
-      const deleted = this.roomsService.deleteRoom(data.roomId);
-
-      if (!deleted) {
-        this.sendToClient(client, {
-          event: 'error',
-          data: { message: 'ไม่พบห้องนี้' },
-        });
-        return;
-      }
-
-      this.logger.log(`🗑️ Room deleted: ${data.roomId}`);
-
-      // Broadcast ไปหาทุกคน
-      this.broadcast({
-        event: 'room-deleted',
-        data: data.roomId,
-      });
-    } catch (error) {
-      this.logger.error('Error deleting room:', error);
     }
   }
 

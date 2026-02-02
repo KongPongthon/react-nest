@@ -19,7 +19,7 @@ interface TableProps<T> {
   totalItems?: number
   page: number
   rowsPerPage: number
-  handleOnChange?: (id: string | number) => void
+  handleOnChange?: (data: T) => void
 }
 export function CustomTable<T>({
   columns,
@@ -29,8 +29,8 @@ export function CustomTable<T>({
   rowsPerPage,
   handleOnChange,
 }: TableProps<T>) {
-  const handleChangeColumn = (id: string | number) => {
-    handleOnChange?.(id)
+  const handleChangeColumn = (data: T) => {
+    handleOnChange?.(data)
     console.log('คลิกแล้ว')
   }
 
@@ -55,7 +55,7 @@ export function CustomTable<T>({
           {data.map((item, index) => (
             <TableRow
               key={index}
-              onClick={() => handleChangeColumn(index)}
+              onClick={() => handleChangeColumn(item)}
               className={cn('hover:cursor-pointer')}
             >
               <TableCell className="font-medium p-4">

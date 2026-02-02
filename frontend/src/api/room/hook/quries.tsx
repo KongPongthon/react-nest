@@ -6,3 +6,9 @@ export function usePostRoom(
 ) {
   return RoomQueries.postRoom.useMutation(option)
 }
+
+export function useJoinRoom(
+  option?: inferOptions<typeof RoomQueries.joinRoom>,
+) {
+  return RoomQueries.joinRoom.useMutation(option)
+}

@@ -1,20 +1,14 @@
-import { useGetRoom } from '@/api/room/hook/quries'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
-import { useState } from 'react'
 
 interface IRoomFormProps {
-  onCreateRoom: (name: string, topic: string) => void
-  onJoinRoom: (name: string, roomCode: string) => void
+  onCreateRoom: () => void
+  onJoinRoom: (roomCode: string) => void
   setMode: (mode: 'create' | 'join') => void
   mode: 'create' | 'join'
-  name: string
-  setName: (name: string) => void
-  topic: string
-  setTopic: (topic: string) => void
   roomCode: string
   setRoomCode: (roomCode: string) => void
 }
@@ -23,23 +17,15 @@ export function RoomForm({
   onJoinRoom,
   setMode,
   mode,
-  name,
-  setName,
-  topic,
-  setTopic,
   roomCode,
   setRoomCode,
 }: IRoomFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim()) return
-
     if (mode === 'create') {
-      if (!topic.trim()) return
-      onCreateRoom(name.trim(), topic.trim())
+      onCreateRoom()
     } else {
-      if (!roomCode.trim()) return
-      onJoinRoom(name.trim(), roomCode.trim().toUpperCase())
+      onJoinRoom(roomCode.trim().toUpperCase())
     }
   }
   return (
@@ -76,7 +62,7 @@ export function RoomForm({
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="name" className="text-foreground">
                 ชื่อของคุณ
               </Label>
@@ -88,9 +74,9 @@ export function RoomForm({
                 className="bg-card border-border focus:border-primary"
                 required
               />
-            </div>
+            </div> */}
 
-            {mode === 'create' ? (
+            {/* {mode === 'create' ? (
               <div className="space-y-2">
                 <Label htmlFor="topic" className="text-foreground">
                   หัวข้อที่จะโหวต
@@ -104,7 +90,8 @@ export function RoomForm({
                   required
                 />
               </div>
-            ) : (
+            ) : ( */}
+            {mode === 'join' && (
               <div className="space-y-2">
                 <Label htmlFor="roomCode" className="text-foreground">
                   รหัสห้อง

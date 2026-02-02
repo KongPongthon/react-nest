@@ -5,7 +5,7 @@ import { RoomController } from './room.controller';
 import { RoomStateService } from './room-state.service';
 
 @Module({
-  providers: [RoomsGateway, RoomService, RoomController],
+  providers: [RoomsGateway, RoomService, RoomController, RoomStateService],
   exports: [RoomsGateway, RoomService, RoomController, RoomStateService],
 })
 export class RoomModule {}
