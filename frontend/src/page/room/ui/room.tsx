@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react'
 import { CustomTable, TableColumn } from '@/components/Custom/Table'
 import { cn } from '@/lib/utils'
 import { useRouter } from '@tanstack/react-router'
-import { RoomCreate, RoomList, useWebSocket } from '@/hooks/useWebSocket'
-import { useJoinRoom, usePostRoom } from '@/api/room/hook/quries'
 import { RoomForm } from './roomForm'
+import { useJoinRoom, usePostRoom } from '@/api/room/hook/mutation'
+import { useWebSocket } from '@/hooks/useWebSocket'
 
+interface RoomList {
+  id: number
+  roomCode: string
+}
 export function Room() {
   const [activeTab, setActiveTab] = useState<string>('create')
   const [mode, setMode] = useState<'create' | 'join'>('create')
@@ -26,31 +30,10 @@ export function Room() {
       setLoading(false)
     })
 
-    const unsubscribeCreated = on('room-created', (newRoom: RoomCreate) => {
-      console.log('✨ New room created:', newRoom)
-
-      const roomListItem: RoomList = {
-        id: newRoom.id,
-        nameCode: newRoom.nameCode,
-      }
-
-      setRooms((prev) => [...prev, roomListItem])
-    })
-
-    const unsubscribeDeleted = on('room-deleted', (roomId: number) => {
-      console.log('🗑️ Room deleted:', roomId)
-      setRooms((prev) => prev.filter((room) => room.id !== roomId))
-    })
-
-    const unsubscribeError = on('error', (error: { message: string }) => {
-      alert(error.message)
-    })
+    send('get-rooms', null)
 
     return () => {
       unsubscribeList()
-      unsubscribeCreated()
-      unsubscribeDeleted()
-      unsubscribeError()
     }
   }, [on])
   const handleJoinRoom = (roomCode: string) => {
@@ -73,11 +56,7 @@ export function Room() {
   }
   const handleCreateRoom = () => {
     try {
-      createRoom.mutate({
-        name,
-        nameRoom: topic,
-        password: roomCode,
-      })
+      createRoom.mutateAsync()
     } catch (error) {
       console.log(error)
     }
@@ -154,10 +133,10 @@ export function Room() {
             columns={
               [
                 {
-                  key: 'nameCode',
+                  key: 'roomCode',
                   name: 'ชื่อห้อง',
                 },
-              ] as TableColumn<{ nameCode: string }>[]
+              ] as TableColumn<{ roomCode: string }>[]
             }
             page={0}
             rowsPerPage={10}

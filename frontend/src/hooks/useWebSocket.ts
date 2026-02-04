@@ -58,12 +58,10 @@ export const useWebSocket = () => {
     new Map(),
   )
 
-  // ✅ เพิ่ม reconnect counter เพื่อจำกัดจำนวนครั้ง
   const reconnectAttemptsRef = useRef<number>(0)
   const maxReconnectAttempts = 5
 
   const connect = useCallback(() => {
-    // ✅ ตรวจสอบจำนวนครั้งที่ reconnect
     if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
       console.error('❌ Max reconnection attempts reached. Stopping...')
       return
@@ -72,9 +70,6 @@ export const useWebSocket = () => {
     try {
       console.log('📡 Connecting to WebSocket...', API_URL_SOCKET)
       const ws = new WebSocket(API_URL_SOCKET)
-
-      console.log('ws', ws)
-
       ws.onopen = () => {
         setIsConnected(true)
         reconnectAttemptsRef.current = 0 // ✅ Reset counter เมื่อเชื่อมต่อสำเร็จ
@@ -109,6 +104,8 @@ export const useWebSocket = () => {
       ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data)
+          console.log('TEST', message)
+
           console.log('📨 Received:', message.event, message.data)
 
           const handlers = messageHandlersRef.current.get(message.event)
