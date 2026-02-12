@@ -13,7 +13,7 @@ export class RoomsService {
     try {
       const roomCode = this.generateRoomCode();
       const roomId = Date.now();
-      const room = {
+      const newRoom: Rooms = {
         id: roomId,
         roomCode: roomCode,
         isClosed: false,
@@ -22,7 +22,7 @@ export class RoomsService {
         createdBy: 'ss',
         updatedBy: 'ss',
       };
-      this.RoomStateService.rooms.set(roomCode, [room]);
+      this.RoomStateService.rooms.set(roomCode, newRoom);
 
       return { success: true };
     } catch (error) {
@@ -30,6 +30,33 @@ export class RoomsService {
       return { success: false };
     }
   }
+
+  getRoomById(id: number) {
+    try {
+      const room = Array.from(this.RoomStateService.rooms.values()).find(
+        (room) => room.id === id,
+      );
+      if (!room) {
+        return { error: 'Room not found' };
+      }
+      return room;
+    } catch (error) {
+      console.log('errors', error);
+    }
+  }
+
+  joinedRoom(id: number) {
+    console.log('Service ID', id);
+    const room = Array.from(this.RoomStateService.rooms.values()).find(
+      (room) => room.id === id,
+    );
+    if (!room) {
+      return { error: 'Room not found' };
+    }
+    // this.RoomStateService.roomMembers.set(id.toString(), new Set());
+    return room.id;
+  }
+
   private generateRoomCode(): string {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = 'ROOM-';

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WebSocketProvider } from './WebSocketProvider'
 
 export function getContext() {
   const queryClient = new QueryClient()
@@ -15,6 +16,8 @@ export function Provider({
   queryClient: QueryClient
 }) {
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <WebSocketProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </WebSocketProvider>
   )
 }

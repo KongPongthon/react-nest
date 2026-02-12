@@ -20,7 +20,7 @@ export function Room() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const createRoom = usePostRoom()
-  const { on, reconnect, isConnected, send } = useWebSocket()
+  const { on, reconnect, isConnected, send, idConnect } = useWebSocket()
   const joingRoom = useJoinRoom()
 
   useEffect(() => {
@@ -29,9 +29,6 @@ export function Room() {
       setRooms(roomsList)
       setLoading(false)
     })
-
-    send('get-rooms', null)
-
     return () => {
       unsubscribeList()
     }
@@ -46,13 +43,17 @@ export function Room() {
   const handleSelectRoom = (id: number) => {
     console.log('TESTID', id)
 
-    joingRoom.mutateAsync(id).then((newRoomId) => {
-      console.log('newRoomId', newRoomId)
-
-      if (newRoomId) {
-        router.navigate({ to: `/room/${newRoomId}/` })
-      }
-    })
+    joingRoom.mutateAsync(
+      { id, idConnect },
+      {
+        onSuccess: (newRoomId) => {
+          router.navigate({ to: `/room/${newRoomId}/` })
+        },
+        onError: (error) => {
+          console.log('Error:', error)
+        },
+      },
+    )
   }
   const handleCreateRoom = () => {
     try {

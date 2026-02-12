@@ -18,6 +18,7 @@ interface WebSocketContextType {
   send: <T>(event: string, data: T) => void
   on: (event: string, handler: (data: any) => void) => () => void
   reconnect: () => void
+  idConnect: string
 }
 
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
@@ -35,6 +36,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     new Map(),
   )
 
+  const [idConnect, setIdConnect] = useState<string>('')
+
   const maxReconnectAttempts = 5
 
   const connect = useCallback(() => {
@@ -47,7 +50,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     const ws = new WebSocket(API_URL_SOCKET)
 
     ws.onopen = () => {
-      console.log('✅ WebSocket connected')
+      console.log('✅ WebSocket connected', 'WS readyState:', ws.readyState, ws)
       setIsConnected(true)
       reconnectAttemptsRef.current = 0
     }
@@ -74,6 +77,10 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const message: WebSocketMessage = JSON.parse(event.data)
         const handlers = messageHandlersRef.current.get(message.event)
+        if (message.event === 'connect') {
+          setIdConnect(message.data.username)
+          console.log('myConnection', message.data.username)
+        }
 
         handlers?.forEach((handler) => handler(message.data))
       } catch (e) {
@@ -126,7 +133,15 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [connect])
 
   return (
-    <WebSocketContext.Provider value={{ isConnected, send, on, reconnect }}>
+    <WebSocketContext.Provider
+      value={{
+        isConnected,
+        send,
+        on,
+        reconnect,
+        idConnect,
+      }}
+    >
       {children}
     </WebSocketContext.Provider>
   )

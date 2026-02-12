@@ -41,6 +41,10 @@ export class RoomsGateway {
         event: 'rooms-list',
         data: rooms,
       });
+      this.sendToClient(client, {
+        event: 'connect',
+        data: { username: clientID },
+      });
     } catch (error) {
       this.logger.error(`Error sending rooms list: ${error}`);
       this.sendToClient(client, {
@@ -57,7 +61,7 @@ export class RoomsGateway {
     const roomID = this.clientToRoom.get(client);
 
     if (roomID) {
-      //   this.RoomStateService.roomMembers.get(roomID)?.delete(client);
+      this.RoomStateService.roomMembers.get(roomID)?.delete(client);
       if (this.RoomStateService.roomMembers.get(roomID)?.size === 0) {
         this.RoomStateService.roomMembers.delete(roomID);
       }
@@ -66,16 +70,22 @@ export class RoomsGateway {
     this.clientToRoom.delete(client);
   }
 
-  handleJoinRoom(client: WebSocket, roomId: string) {
-    if (!this.RoomStateService.roomMembers.has(roomId)) {
-      this.RoomStateService.roomMembers.set(roomId, new Set());
+  handleJoinRoom(client: string, roomId: string) {
+    const clientSocket = this.findSocketById(client);
+    if (!clientSocket) {
+      console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
+      return;
     }
-    this.RoomStateService.roomMembers?.get(roomId)?.add(client); // ← สำคัญ!
-    this.clientToRoom.set(client, roomId);
+    // --- จุดที่ต้องแก้ไข: เช็คและสร้าง Set ---
+    if (!this.RoomStateService.roomMembers.has(roomId)) {
+      this.RoomStateService.roomMembers.set(roomId, new Set<WebSocket>());
+    }
+    this.RoomStateService.roomMembers?.get(roomId)?.add(clientSocket);
+    this.clientToRoom.set(clientSocket, roomId);
     this.broadcastToRoom(roomId, {
-      event: 'user-joined',
+      event: 'join-room',
       data: {
-        username: this.clients.get(client),
+        username: this.clients.get(clientSocket),
         memberCount: this.RoomStateService.roomMembers.get(roomId)?.size,
       },
     });
@@ -85,13 +95,20 @@ export class RoomsGateway {
   handleLeaveRoom(client: WebSocket) {
     const roomId = this.clientToRoom.get(client);
     if (roomId) {
-      //   this.RoomStateService.roomMembers.get(roomId)?.delete(client); // ← สำคัญ!
+      this.RoomStateService.roomMembers.get(roomId)?.delete(client); // ← สำคัญ!
       this.clientToRoom.delete(client);
     }
   }
 
   handleNotifyUpdate<T>(event: string, data: T) {
     this.broadcast({
+      event: event,
+      data: data,
+    });
+  }
+
+  handleNOtifyRoomUpdate<T>(roomId: string, event: string, data: T) {
+    this.broadcastToRoom(roomId, {
       event: event,
       data: data,
     });
@@ -104,15 +121,27 @@ export class RoomsGateway {
   }
 
   private broadcastToRoom(roomId: string, message: WebSocketMessage) {
+    console.log(
+      `📢 กำลังจะ Broadcast ไปที่ห้อง: ${roomId} (Type: ${typeof roomId})`,
+    );
     const members = this.RoomStateService.roomMembers.get(roomId);
-    if (members) {
-      const payload = JSON.stringify(message);
-      members.forEach((member) => {
-        if (member.readyState === WebSocket.OPEN) {
-          member.send(payload);
-        }
-      });
+    if (!members) {
+      console.log(
+        `⚠️ ไม่พบสมาชิกในห้อง ${roomId} ใน Map (อาจจะลืม .set() หรือ Key ไม่ตรง)`,
+      );
+      console.log(
+        'ปัจจุบันมีห้องในระบบ:',
+        Array.from(this.RoomStateService.roomMembers.keys()),
+      );
+      return;
     }
+    console.log(`✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.size} คน`);
+    const payload = JSON.stringify(message);
+    members.forEach((member) => {
+      if (member.readyState === WebSocket.OPEN) {
+        member.send(payload);
+      }
+    });
   }
 
   private broadcast(message: WebSocketMessage) {
@@ -126,5 +155,14 @@ export class RoomsGateway {
 
   private generateClientId(): string {
     return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  findSocketById(clientId: string): WebSocket | undefined {
+    for (const [socket, id] of this.clients.entries()) {
+      if (id === clientId) {
+        return socket;
+      }
+    }
+    return undefined;
   }
 }
