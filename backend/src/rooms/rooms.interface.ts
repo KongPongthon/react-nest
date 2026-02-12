@@ -29,3 +29,9 @@ export interface WebSocketMessage<T = any> {
   event: string;
   data: T;
 }
+
+export interface SeatInfo {
+  userId: string;
+  userName: string;
+  index: number;
+}

@@ -5,27 +5,33 @@ import { useEffect, useMemo, useState } from 'react'
 
 interface Person {
   id: string
-  name: string
+  userName: string
   role: string
   index: number
 }
 
 export function RoomPokerDetail() {
-  const { on } = useWebSocket()
-  useEffect(() => {
-    const unsubscribeList = on('join-room', (roomsList) => {
-      console.log('📋 Received Join Room:', roomsList)
-      setPeople(roomsList)
-    })
-    return () => {
-      unsubscribeList()
-    }
-  }, [on])
+  const { on, send } = useWebSocket()
 
   const [people, setPeople] = useState<Person[]>([])
   const [peopleSitdown, setPeopleSitdown] = useState<Person[]>([])
   const radius = 250
   const MAX_SEATS = 10
+
+  useEffect(() => {
+    const unsubscribeList = on('join-room', (roomsList) => {
+      console.log('📋 Received Join Room:', roomsList)
+      setPeople(roomsList)
+    })
+
+    const unsubscribeSitdown = on('update-seats', (roomsList) => {
+      console.log('📋 Received Join Room Sitdown:', roomsList)
+      setPeopleSitdown(roomsList.seats)
+    })
+    return () => {
+      ;(unsubscribeList(), unsubscribeSitdown())
+    }
+  }, [on])
 
   const memberSitDown = useMemo(() => {
     return Array.from({ length: MAX_SEATS }, (_, i) => {
@@ -37,7 +43,7 @@ export function RoomPokerDetail() {
 
       return {
         id: `empty-${i}`,
-        name: 'Empty Seat',
+        userName: 'Empty Seat',
         role: 'Guest',
         index: i,
         isOccupied: false,
@@ -46,26 +52,10 @@ export function RoomPokerDetail() {
   }, [peopleSitdown])
 
   const Sitdown = (index: number) => {
-    const MY_ID = 'me-123'
-    setPeopleSitdown((prev) => {
-      const isSeatTaken = prev.some((p) => p.index === index)
-      if (isSeatTaken) {
-        console.log('เก้าอี้นี้มีคนนั่งแล้ว!')
-        return prev
-      }
-      const amIAlreadySitting = prev.some((p) => p.id === MY_ID)
-      if (amIAlreadySitting) {
-        const newSit = prev.filter((p) => p.id !== MY_ID)
-        return [...newSit, { id: MY_ID, name: 'My Name', role: 'User', index }]
-      }
-      return [
-        ...prev,
-        { id: MY_ID, name: 'My Name', role: 'User', index: index },
-      ]
-    })
+    const MY_ID = 'me-124'
+    // console.log('TESTINdex', index)
+    send('sitdown', { index: index, id: MY_ID })
   }
-
-  console.log('memberSitDown', memberSitDown)
 
   return (
     <div className="h-full w-full flex justify-center items-center">
@@ -112,15 +102,16 @@ export function RoomPokerDetail() {
                   group-hover:scale-110 transition-transform cursor-pointer border-emerald-500 bg-slate-700
                 `,
                       )}
+                      onClick={() => Sitdown(person.index)}
                     >
                       {person.role === 'Host' && (
                         <Crown className="top-0 left-1/2 transform -translate-x-1/2 absolute" />
                       )}
-                      {person.name.charAt(0)}
+                      {person.userName.charAt(0)}
                     </div>
 
                     <div className="mt-2 bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white whitespace-nowrap">
-                      {person.name}
+                      {person.userName}
                     </div>
                   </div>
                 )}

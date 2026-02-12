@@ -45,6 +45,9 @@ export class RoomsGateway {
         event: 'connect',
         data: { username: clientID },
       });
+      client.on('message', (data: Buffer) => {
+        this.handleMessage(client, data);
+      });
     } catch (error) {
       this.logger.error(`Error sending rooms list: ${error}`);
       this.sendToClient(client, {
@@ -76,7 +79,7 @@ export class RoomsGateway {
       console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
       return;
     }
-    // --- จุดที่ต้องแก้ไข: เช็คและสร้าง Set ---
+
     if (!this.RoomStateService.roomMembers.has(roomId)) {
       this.RoomStateService.roomMembers.set(roomId, new Set<WebSocket>());
     }
@@ -97,6 +100,40 @@ export class RoomsGateway {
     if (roomId) {
       this.RoomStateService.roomMembers.get(roomId)?.delete(client); // ← สำคัญ!
       this.clientToRoom.delete(client);
+    }
+  }
+
+  private handleMessage(client: WebSocket, data: Buffer) {
+    try {
+      const message: WebSocketMessage = JSON.parse(
+        data.toString(),
+      ) as WebSocketMessage;
+      const clientId = this.clients.get(client) || 'unknown';
+      this.logger.log(`📨 Message from ${clientId}: ${message.event}`);
+      let roomId: string | undefined;
+      switch (message.event) {
+        case 'sitdown':
+          roomId = this.clientToRoom.get(client);
+          if (roomId) {
+            this.sitdown(roomId, message.data);
+          } else {
+            this.logger.warn(`❌ Client ${clientId} ยังไม่ได้ join room`);
+            client.send(
+              JSON.stringify({
+                event: 'error',
+                data: { message: 'กรุณา join room ก่อน' },
+              }),
+            );
+          }
+          break;
+        // case 'create-room':
+        //   this.handleCreateRoom(client, message.data);
+        //   break;
+        default:
+          this.logger.warn(`Unknown event: ${message.event}`);
+      }
+    } catch (error) {
+      this.logger.error('Error parsing message:', error);
     }
   }
 
@@ -150,6 +187,47 @@ export class RoomsGateway {
       if (client.readyState === WebSocket.OPEN) {
         client.send(payload);
       }
+    });
+  }
+
+  private sitdown(roomId: string, data: { index: number; id: string }) {
+    const { index, id } = data;
+    console.log('index id :', index, id, roomId);
+
+    if (!roomId) return;
+    if (!this.RoomStateService.roomSeats.has(roomId)) {
+      this.RoomStateService.roomSeats.set(roomId, new Map());
+    }
+
+    const seats = this.RoomStateService.roomSeats.get(roomId);
+    if (!seats) return;
+    const myCurrentSeatIndex = Array.from(seats.entries()).find(
+      // eslint-disable-next-line
+      ([_, seat]) => seat.userId === id,
+    )?.[0];
+
+    const existingInSeat = seats.get(index);
+    if (existingInSeat && existingInSeat.userId === id) {
+      seats.delete(index);
+    } else if (!existingInSeat) {
+      if (myCurrentSeatIndex !== undefined) {
+        seats.delete(myCurrentSeatIndex);
+      }
+      seats.set(index, { userId: id, userName: id, index });
+    } else {
+      console.log(`⚠️ ที่นั่ง ${index} มีคนนั่งอยู่แล้ว`);
+      return;
+    }
+    const updatedSeats = Array.from(seats.values());
+    console.log('updatedSeats', updatedSeats);
+
+    // **Broadcast ไปยังทุกคนในห้องผ่าน method ที่มีอยู่แล้ว**
+    this.broadcastToRoom(roomId, {
+      event: 'update-seats',
+      data: {
+        seats: updatedSeats,
+        roomId: roomId,
+      },
     });
   }
 
