@@ -1,7 +1,14 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { WebSocketProvider } from '@/integrations/tanstack-query/WebSocketProvider'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protect')({
-  beforeLoad({ location }) {
-    console.log(location)
-  },
+  component: RouteComponent,
 })
+
+function RouteComponent() {
+  return (
+    <WebSocketProvider>
+      <Outlet />
+    </WebSocketProvider>
+  )
+}

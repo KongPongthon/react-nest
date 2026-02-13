@@ -16,6 +16,7 @@ import { Route as DemoTanchatRouteImport } from './routes/demo/tanchat'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
 import { Route as ProtectRoomIndexRouteImport } from './routes/_protect/room/index'
+import { Route as AuthAuthorizedIndexRouteImport } from './routes/_auth/authorized/index'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -63,6 +64,11 @@ const ProtectRoomIndexRoute = ProtectRoomIndexRouteImport.update({
   id: '/room/',
   path: '/room/',
   getParentRoute: () => ProtectRouteRoute,
+} as any)
+const AuthAuthorizedIndexRoute = AuthAuthorizedIndexRouteImport.update({
+  id: '/_auth/authorized/',
+  path: '/authorized/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ExampleGuitarsGuitarIdRoute = ExampleGuitarsGuitarIdRouteImport.update({
   id: '/example/guitars/$guitarId',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/authorized/': typeof AuthAuthorizedIndexRoute
   '/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -164,6 +171,7 @@ export interface FileRoutesByTo {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/authorized': typeof AuthAuthorizedIndexRoute
   '/room': typeof ProtectRoomIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
+  '/_auth/authorized/': typeof AuthAuthorizedIndexRoute
   '/_protect/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/authorized/'
     | '/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/authorized'
     | '/room'
     | '/example/guitars'
     | '/demo/start/ssr/data-only'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
+    | '/_auth/authorized/'
     | '/_protect/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
@@ -276,6 +288,7 @@ export interface RootRouteChildren {
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
   ExampleGuitarsGuitarIdRoute: typeof ExampleGuitarsGuitarIdRoute
+  AuthAuthorizedIndexRoute: typeof AuthAuthorizedIndexRoute
   ExampleGuitarsIndexRoute: typeof ExampleGuitarsIndexRoute
   DemoStartSsrDataOnlyRoute: typeof DemoStartSsrDataOnlyRoute
   DemoStartSsrFullSsrRoute: typeof DemoStartSsrFullSsrRoute
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/room/'
       preLoaderRoute: typeof ProtectRoomIndexRouteImport
       parentRoute: typeof ProtectRouteRoute
+    }
+    '/_auth/authorized/': {
+      id: '/_auth/authorized/'
+      path: '/authorized'
+      fullPath: '/authorized/'
+      preLoaderRoute: typeof AuthAuthorizedIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/example/guitars/$guitarId': {
       id: '/example/guitars/$guitarId'
@@ -456,6 +476,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
   ExampleGuitarsGuitarIdRoute: ExampleGuitarsGuitarIdRoute,
+  AuthAuthorizedIndexRoute: AuthAuthorizedIndexRoute,
   ExampleGuitarsIndexRoute: ExampleGuitarsIndexRoute,
   DemoStartSsrDataOnlyRoute: DemoStartSsrDataOnlyRoute,
   DemoStartSsrFullSsrRoute: DemoStartSsrFullSsrRoute,
