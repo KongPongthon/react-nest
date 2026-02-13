@@ -1,10 +1,10 @@
-import { LoginPage } from '@/page/login'
+import { Room } from '@/page/room'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/_auth/')({
+export const Route = createFileRoute('/_protect/room/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  return <LoginPage />
+  return <Room />
 }

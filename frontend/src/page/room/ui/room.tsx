@@ -75,21 +75,21 @@ export function Room() {
     setMode(value)
   }
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>กำลังโหลด...</p>
-        {/* ✅ ปุ่ม Reconnect */}
-        {!isConnected && (
-          <button onClick={reconnect} className="reconnect-button">
-            🔄 เชื่อมต่อใหม่
-          </button>
-        )}
-      </div>
-    )
-  }
-  console.log('rooms Table', rooms)
+  // if (loading) {
+  //   return (
+  //     <div className="loading-container">
+  //       <div className="spinner"></div>
+  //       <p>กำลังโหลด...</p>
+  //       {/* ✅ ปุ่ม Reconnect */}
+  //       {!isConnected && (
+  //         <button onClick={reconnect} className="reconnect-button">
+  //           🔄 เชื่อมต่อใหม่
+  //         </button>
+  //       )}
+  //     </div>
+  //   )
+  // }
+  // console.log('rooms Table', rooms)
 
   return (
     <div className="h-full min-h-screen w-full flex justify-center items-center">
