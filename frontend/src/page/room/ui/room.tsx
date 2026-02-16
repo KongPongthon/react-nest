@@ -14,20 +14,17 @@ export function Room() {
   const [activeTab, setActiveTab] = useState<string>('create')
   const [mode, setMode] = useState<'create' | 'join'>('create')
   const [name, setName] = useState('')
-  const [topic, setTopic] = useState('')
   const [roomCode, setRoomCode] = useState('')
   const [rooms, setRooms] = useState<RoomList[]>([])
-  const [loading, setLoading] = useState(true)
   const router = useRouter()
   const createRoom = usePostRoom()
-  const { on, reconnect, isConnected, send, idConnect } = useWebSocket()
+  const { on, idConnect } = useWebSocket()
   const joingRoom = useJoinRoom()
 
   useEffect(() => {
     const unsubscribeList = on('rooms-list', (roomsList: RoomList[]) => {
       console.log('📋 Received rooms list:', roomsList)
       setRooms(roomsList)
-      setLoading(false)
     })
     return () => {
       unsubscribeList()
@@ -69,27 +66,10 @@ export function Room() {
 
   const handleMode = (value: 'create' | 'join') => {
     setName('')
-    setTopic('')
     setRoomCode('')
 
     setMode(value)
   }
-
-  // if (loading) {
-  //   return (
-  //     <div className="loading-container">
-  //       <div className="spinner"></div>
-  //       <p>กำลังโหลด...</p>
-  //       {/* ✅ ปุ่ม Reconnect */}
-  //       {!isConnected && (
-  //         <button onClick={reconnect} className="reconnect-button">
-  //           🔄 เชื่อมต่อใหม่
-  //         </button>
-  //       )}
-  //     </div>
-  //   )
-  // }
-  // console.log('rooms Table', rooms)
 
   return (
     <div className="h-full min-h-screen w-full flex justify-center items-center">

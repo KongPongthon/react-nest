@@ -1,5 +1,4 @@
 import { client } from '@/config/axios'
-import { useWebSocket } from '@/hooks/useWebSocket'
 
 export const apiPostRoom = async (): Promise<any> => {
   const res = await client.post('/rooms')
