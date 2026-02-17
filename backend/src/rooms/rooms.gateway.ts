@@ -59,7 +59,7 @@ export class RoomsGateway {
 
   handleDisconnect(client: WebSocket) {
     // const clientID = this.clients.get(client);
-    console.log('TESTClient', client);
+    // console.log('TESTClient', client);
 
     const roomID = this.clientToRoom.get(client);
 

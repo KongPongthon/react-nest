@@ -1,4 +1,6 @@
+import { apiOauth } from '@/api/auth/api'
 import { API_URL } from '@/constants'
+import { getScope } from '@/lib/oauth-script'
 
 import axios from 'axios'
 import qs from 'qs'
@@ -15,4 +17,26 @@ export const client = axios.create({
   paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'repeat' }),
   enableBearer: true,
   enableRefreshToken: true,
+})
+
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await apiOauth({
+        refresh_token: localStorage.getItem('refresh_token') ?? '',
+        getScope: getScope(),
+      })
+      return client(error.config) // Retry original request
+    }
+    return Promise.reject(error)
+  },
+)
+
+client.interceptors.request.use((config) => {
+  if (config.enableBearer) {
+    const accessToken = localStorage.getItem('access_token')
+    config.headers.Authorization = `Bearer ${accessToken}`
+  }
+  return config
 })

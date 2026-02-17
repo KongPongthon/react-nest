@@ -10,6 +10,34 @@ interface IApiAuthorized {
   getScope: string
 }
 
+interface IApiRefreshToken {
+  refresh_token: string
+  getScope: string
+}
+
+export const apiOauth = async ({
+  refresh_token,
+  getScope,
+}: IApiRefreshToken) => {
+  try {
+    const res = await client.post(
+      MSTokenUrl,
+      {
+        client_id: clientID,
+        scope: getScope,
+        refresh_token: refresh_token,
+        grant_type: 'refresh_token',
+        // code: code,
+        // redirect_uri: redirectUrl,
+        // code_verifier: codeVerifier,
+      },
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
 export const apiAuthorized = async ({
   code,
   codeVerifier,
@@ -28,7 +56,8 @@ export const apiAuthorized = async ({
       },
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     )
-
+    localStorage.setItem('refresh_token', res.data.refresh_token)
+    localStorage.setItem('access_token', res.data.access_token)
     return res.data
   } catch (error) {
     console.log(error)
@@ -36,10 +65,8 @@ export const apiAuthorized = async ({
   }
 }
 
-export const apiLogin = async (data: string) => {
+export const apiLogin = async () => {
   try {
-    console.log('TESTDATA', data)
-
     const res = await client.post('/login')
     return res.data
   } catch (error) {
