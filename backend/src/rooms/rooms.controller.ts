@@ -6,17 +6,15 @@ import {
   Get,
   Logger,
   Post,
-  UseGuards,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { RoomsGateway } from './rooms.gateway';
 import { TablesRooms } from './rooms.interface';
-import { AuthGuard } from 'src/login/auth.guard';
 
 export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    return request['user'];
+    return request['user'] as JWTPayload;
   },
 );
 
@@ -58,15 +56,9 @@ export class RoomsController {
     private readonly RoomGateway: RoomsGateway,
   ) {}
 
-  @UseGuards(AuthGuard)
   @Post()
-  addRoom(@CurrentUser() user: JWTPayload) {
+  addRoom() {
     try {
-      if (!user) {
-        return { error: 'Token ไม่ถูกต้อง หรือหมดอายุ' };
-      }
-      console.log('user :', user);
-
       const data = this.RoomsService.createdRoom();
       // console.log('TEST DATA', data);
       if (!data.success) {
@@ -90,18 +82,10 @@ export class RoomsController {
       return { error: 'An error occurred' };
     }
   }
-  @UseGuards(AuthGuard)
-  @Post('/join')
-  joinRoom(
-    @Body() body: { id: string; idConnect: string },
-    @CurrentUser() user: JWTPayload,
-  ) {
-    try {
-      if (!user) {
-        return { error: 'Token ไม่ถูกต้อง หรือหมดอายุ' };
-      }
-      console.log(user);
 
+  @Post('/join')
+  joinRoom(@Body() body: { id: string; idConnect: string }) {
+    try {
       const { id, idConnect } = body;
       console.log(id, idConnect);
       const data = this.RoomsService.joinedRoom(parseInt(id));
@@ -119,12 +103,18 @@ export class RoomsController {
       return { error: 'An error occurred' };
     }
   }
-  @UseGuards(AuthGuard)
+
   @Get()
   getRoomsController() {
     try {
       const data = this.RoomsService.getRoom();
-      console.log('data', data);
+      const newData = data.map((room) => {
+        return {
+          id: room.id,
+          roomCode: room.roomCode,
+        };
+      });
+      return newData;
     } catch (error) {
       console.error(error);
       return { error: 'An error occurred' };

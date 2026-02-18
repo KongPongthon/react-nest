@@ -5,6 +5,7 @@ import { useRouter } from '@tanstack/react-router'
 import { RoomForm } from './roomForm'
 import { useJoinRoom, usePostRoom } from '@/api/room/hook/mutation'
 import { useWebSocket } from '@/hooks/useWebSocket'
+import { useGetRooms } from '@/api/room/hook/quries'
 
 interface RoomList {
   id: number
@@ -20,6 +21,14 @@ export function Room() {
   const createRoom = usePostRoom()
   const { on, idConnect } = useWebSocket()
   const joingRoom = useJoinRoom()
+
+  const { data, isSuccess } = useGetRooms()
+
+  useEffect(() => {
+    if (isSuccess && data) {
+      setRooms(data)
+    }
+  }, [isSuccess, data])
 
   useEffect(() => {
     const unsubscribeList = on('rooms-list', (roomsList: RoomList[]) => {

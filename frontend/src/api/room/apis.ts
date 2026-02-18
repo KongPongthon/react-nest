@@ -17,3 +17,8 @@ export const apiJoinRoom = async ({
   const res = await client.post('/rooms/join', { id: id, idConnect: idConnect })
   return res.data
 }
+
+export const apiGetRooms = async (): Promise<any> => {
+  const res = await client.get('/rooms')
+  return res.data
+}

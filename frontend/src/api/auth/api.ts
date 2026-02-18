@@ -56,8 +56,6 @@ export const apiAuthorized = async ({
       },
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     )
-    localStorage.setItem('refresh_token', res.data.refresh_token)
-    localStorage.setItem('access_token', res.data.access_token)
     return res.data
   } catch (error) {
     console.log(error)
@@ -65,9 +63,21 @@ export const apiAuthorized = async ({
   }
 }
 
-export const apiLogin = async () => {
+export const apiLogin = async (data: string) => {
   try {
-    const res = await client.post('/login')
+    console.log('API Verify', data, typeof data)
+
+    const res = await client.post(
+      '/login',
+      {},
+      {
+        enableBearer: false,
+        headers: {
+          Authorization: `Bearer ${data}`,
+        },
+      },
+    )
+    localStorage.setItem('access_token', res.data.data)
     return res.data
   } catch (error) {
     console.log(error)

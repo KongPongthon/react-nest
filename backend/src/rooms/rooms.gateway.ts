@@ -4,6 +4,8 @@ import { Server, WebSocket } from 'ws';
 import { WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
+import { IncomingMessage } from 'http';
+import { LoginService } from 'src/login/login.service';
 
 @WebSocketGateway({
   cors: {
@@ -22,19 +24,41 @@ export class RoomsGateway {
 
   constructor(
     private readonly RoomStateService: RoomStateService,
-    private readonly RoomServce: RoomsService,
+    private readonly RoomService: RoomsService,
+    private readonly LoginService: LoginService,
   ) {}
 
   //eslint-disable-next-line
-  handleConnection(client: WebSocket, ...arge: any[]) {
+  handleConnection(client: WebSocket, request: IncomingMessage) {
     const clientID = this.generateClientId();
     this.clients.set(client, clientID);
+
+    const url = new URL(request.url ?? '', 'http://localhost');
+
+    console.log('Path:', url.pathname);
+    const token = url.searchParams.get('token');
+
+    if (!token && typeof token !== 'string') {
+      this.sendToClient(client, {
+        event: 'error',
+        data: { message: 'Token not found' },
+      });
+    }
+
+    const check_token = this.LoginService.verify(token?.toString() ?? '');
+
+    if (!check_token) {
+      this.sendToClient(client, {
+        event: 'error',
+        data: { message: 'Token not found' },
+      });
+    }
 
     this.logger.log(
       `✅ Client connected: ${clientID} (Total: ${this.clients.size})`,
     );
     try {
-      const rooms = this.RoomServce.getRoom();
+      const rooms = this.RoomService.getRoom();
       this.logger.log(`📤 Sending ${rooms.length} rooms to ${clientID}`);
 
       this.sendToClient(client, {
@@ -108,6 +132,7 @@ export class RoomsGateway {
       const message: WebSocketMessage = JSON.parse(
         data.toString(),
       ) as WebSocketMessage;
+
       const clientId = this.clients.get(client) || 'unknown';
       this.logger.log(`📨 Message from ${clientId}: ${message.event}`);
       let roomId: string | undefined;
@@ -126,9 +151,40 @@ export class RoomsGateway {
             );
           }
           break;
-        // case 'create-room':
-        //   this.handleCreateRoom(client, message.data);
-        //   break;
+        case 'leave_room':
+          roomId = this.clientToRoom.get(client);
+
+          if (roomId) {
+            const clientSocket = this.findSocketById(roomId);
+            const roomMembers = this.RoomStateService.roomMembers.get(roomId);
+
+            if (roomMembers) {
+              // 1. ลบคนออกก่อน
+              roomMembers.delete(client);
+              this.clientToRoom.delete(client);
+
+              // 2. เก็บจำนวนคนที่เหลือไว้ก่อนจะเช็คว่าต้องลบห้องไหม
+              const remainingCount = roomMembers.size;
+
+              if (remainingCount > 0) {
+                // 3. ถ้ายังมีคนเหลือ ให้ Broadcast บอกคนที่เหลือว่ามีคนออก
+                this.broadcastToRoom(roomId, {
+                  event: 'leave-room', // เปลี่ยนจาก join-room เป็น leave-room ให้สื่อสารชัดเจน
+                  data: {
+                    username: this.clients.get(clientSocket),
+                    memberCount: remainingCount,
+                  },
+                });
+              } else {
+                // 4. ถ้าไม่เหลือใครแล้ว ถึงค่อยลบห้องทิ้งจากระบบ
+                this.RoomStateService.roomMembers.delete(roomId);
+                console.log(
+                  `Room ${roomId} is now empty and has been removed.`,
+                );
+              }
+            }
+          }
+          break;
         default:
           this.logger.warn(`Unknown event: ${message.event}`);
       }

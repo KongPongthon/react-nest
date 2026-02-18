@@ -29,7 +29,7 @@ function RouteComponent() {
           console.log('TEST OnSuccess', data)
           localStorage.setItem('refresh_token', data.refresh_token)
           authLogin
-            .mutateAsync()
+            .mutateAsync(data.access_token)
             .then(() => router.navigate({ to: '/room', replace: true }))
             .catch(() => router.navigate({ to: `/`, replace: true }))
         },

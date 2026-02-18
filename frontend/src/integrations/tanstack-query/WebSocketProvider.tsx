@@ -46,8 +46,14 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
       return
     }
 
+    const token = localStorage.getItem('access_token')
+    if (!token) {
+      console.error('❌ Token not found')
+      return
+    }
+
     console.log('📡 Connecting WebSocket...', API_URL_SOCKET)
-    const ws = new WebSocket(API_URL_SOCKET)
+    const ws = new WebSocket(`${API_URL_SOCKET}?token=${token}`)
 
     ws.onopen = () => {
       console.log('✅ WebSocket connected', 'WS readyState:', ws.readyState, ws)

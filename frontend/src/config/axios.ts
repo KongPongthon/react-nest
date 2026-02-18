@@ -27,7 +27,7 @@ client.interceptors.response.use(
         refresh_token: localStorage.getItem('refresh_token') ?? '',
         getScope: getScope(),
       })
-      return client(error.config) // Retry original request
+      return client(error.config)
     }
     return Promise.reject(error)
   },

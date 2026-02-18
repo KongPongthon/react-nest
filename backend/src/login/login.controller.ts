@@ -6,7 +6,6 @@ import {
   HttpStatus,
   Logger,
   Post,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { LoginService } from './login.service';
@@ -16,7 +15,7 @@ import type { Request } from 'express';
 export const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    return request['user'];
+    return request['user'] as JWTPayload;
   },
 );
 interface JWTPayload {
@@ -50,21 +49,35 @@ interface JWTPayload {
 @Controller('login')
 export class LoginController {
   private readonly logger = new Logger(LoginService.name);
-  constructor() {}
+  constructor(private readonly service: LoginService) {}
   @UseGuards(AuthGuard)
   @Post()
   login(@CurrentUser() user: JWTPayload) {
     try {
-      console.log(user);
+      console.log('user', user);
 
       if (!user) {
         return {
           message: 'Token ไม่ถูกต้อง หรือหมดอายุ',
           statusCode: 401,
-          data: '',
         };
       }
+      console.log('Token');
+
+      const token = this.service.JWTGenerate({
+        name: user.name,
+        id: user.appid,
+      });
+
+      console.log('Token', token);
+
+      return {
+        message: 'Login สำเร็จ',
+        statusCode: 200,
+        data: token,
+      };
     } catch (error) {
+      this.logger.error(error);
       if (error instanceof HttpException) {
         throw error;
       } else {
