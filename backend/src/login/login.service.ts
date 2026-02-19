@@ -49,7 +49,7 @@ export class LoginService {
     return payload;
   }
 
-  JWTGenerate(data: { name: string; id: string }): string {
+  JWTGenerate(data: { name: string; id: string; email: string }): string {
     console.log('JWT Generate');
 
     console.log('JWT Generate secret', this.secret);
@@ -59,7 +59,7 @@ export class LoginService {
     try {
       console.log('JWTGenerate', data);
       const accessToken = jwt.sign(
-        { name: data.name, id: data.id },
+        { name: data.name, id: data.id, email: data.email },
         this.secret,
         {
           expiresIn: '3m',

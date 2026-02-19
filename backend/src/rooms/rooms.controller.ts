@@ -4,19 +4,16 @@ import {
   createParamDecorator,
   ExecutionContext,
   Get,
+  HttpException,
+  HttpStatus,
   Logger,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { RoomsGateway } from './rooms.gateway';
 import { TablesRooms } from './rooms.interface';
-
-export const CurrentUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest<Request>();
-    return request['user'] as JWTPayload;
-  },
-);
+import { AuthGuard } from './auth.guard';
 
 interface JWTPayload {
   aud: string;
@@ -47,6 +44,13 @@ interface JWTPayload {
   xms_ftd: string;
 }
 
+const CurrentUser = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest<Request>();
+    return request['user'] as JWTPayload;
+  },
+);
+
 @Controller('rooms')
 export class RoomsController {
   private readonly logger = new Logger(RoomsController.name);
@@ -55,11 +59,17 @@ export class RoomsController {
     private readonly RoomsService: RoomsService,
     private readonly RoomGateway: RoomsGateway,
   ) {}
-
+  @UseGuards(AuthGuard)
   @Post()
-  addRoom() {
+  addRoom(@CurrentUser() user: JWTPayload) {
     try {
+      console.log('TEST User', user);
+      if (!user) {
+        return { error: 'An error occurred' };
+      }
       const data = this.RoomsService.createdRoom();
+      console.log('Data', data);
+
       // console.log('TEST DATA', data);
       if (!data.success) {
         return { error: 'An error occurred' };
@@ -82,7 +92,7 @@ export class RoomsController {
       return { error: 'An error occurred' };
     }
   }
-
+  @UseGuards(AuthGuard)
   @Post('/join')
   joinRoom(@Body() body: { id: string; idConnect: string }) {
     try {
@@ -118,6 +128,32 @@ export class RoomsController {
     } catch (error) {
       console.error(error);
       return { error: 'An error occurred' };
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/sitdown')
+  SitdownInRoom(
+    @Body() body: { indexChair: string; idConnect: string },
+    @CurrentUser() user: JWTPayload,
+  ) {
+    try {
+      console.log(body, user);
+      this.RoomGateway.sitdownNew(
+        body.idConnect,
+        parseInt(body.indexChair),
+        user.email,
+      );
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof HttpException) {
+        throw error;
+      } else {
+        throw new HttpException(
+          'An error occurred',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
     }
   }
 }

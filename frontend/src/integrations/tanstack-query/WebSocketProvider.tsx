@@ -1,5 +1,8 @@
 // src/providers/WebSocketProvider.tsx
+import { useAuthLogin, useAuthRefresh } from '@/api/auth/hook/mutation'
 import { API_URL_SOCKET } from '@/constants'
+import { getScope } from '@/lib/oauth-script'
+import { useRouter } from '@tanstack/react-router'
 import React, {
   createContext,
   useCallback,
@@ -21,13 +24,18 @@ interface WebSocketContextType {
   idConnect: string
 }
 
+interface IRefreshToken {
+  refresh_token: string
+  access_token: string
+}
+
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isConnected, setIsConnected] = useState(false)
-
+  const router = useRouter()
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const reconnectAttemptsRef = useRef(0)
@@ -37,7 +45,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   )
 
   const [idConnect, setIdConnect] = useState<string>('')
-
+  const authLogin = useAuthLogin()
+  const authRefresh = useAuthRefresh()
   const maxReconnectAttempts = 5
 
   const connect = useCallback(() => {
@@ -49,6 +58,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = localStorage.getItem('access_token')
     if (!token) {
       console.error('❌ Token not found')
+      RefreshToken()
       return
     }
 
@@ -96,6 +106,27 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     wsRef.current = ws
   }, [])
+
+  const RefreshToken = async () => {
+    try {
+      await authRefresh.mutateAsync(
+        {
+          refresh_token: localStorage.getItem('refresh_token') ?? '',
+          getScope: getScope(),
+        },
+        {
+          onSuccess: async (data: IRefreshToken) => {
+            localStorage.setItem('refresh_token', data.refresh_token)
+            await authLogin.mutateAsync(data.access_token)
+          },
+          onError: () => router.navigate({ to: `/`, replace: true }),
+        },
+      )
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+  }
 
   const send = useCallback(<T,>(event: string, data: T) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

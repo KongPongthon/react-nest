@@ -1,19 +1,9 @@
 import { client } from '@/config/axios'
+import { IApiAuthorized, IApiRefreshToken } from './types'
 
 const clientID: string = import.meta.env.VITE_MS_CLIENT_ID
 const MSTokenUrl: string = import.meta.env.VITE_MS_TOKEN_URL
 const redirectUrl: string = import.meta.env.VITE_REDIRECT_URI
-
-interface IApiAuthorized {
-  code: string
-  codeVerifier: string
-  getScope: string
-}
-
-interface IApiRefreshToken {
-  refresh_token: string
-  getScope: string
-}
 
 export const apiOauth = async ({
   refresh_token,
@@ -33,6 +23,7 @@ export const apiOauth = async ({
       },
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     )
+    return res.data
   } catch (error) {
     throw error
   }

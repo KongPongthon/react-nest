@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
 import { Rooms } from './rooms.interface';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class RoomsService {
@@ -64,5 +65,26 @@ export class RoomsService {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
+  }
+
+  verify(token: string) {
+    try {
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        throw new Error('JWT_SECRET is not defined in env');
+      }
+      const payload = jwt.verify(token, secret);
+      return payload;
+    } catch (error) {
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new Error('Token หมดอายุแล้ว');
+      }
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new Error('Token ไม่ถูกต้อง (Invalid Signature)');
+      }
+
+      console.error('JWT Verification Error:', error);
+      throw new Error('ไม่สามารถยืนยันตัวตนได้');
+    }
   }
 }

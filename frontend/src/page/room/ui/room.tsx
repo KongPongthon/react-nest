@@ -6,11 +6,8 @@ import { RoomForm } from './roomForm'
 import { useJoinRoom, usePostRoom } from '@/api/room/hook/mutation'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useGetRooms } from '@/api/room/hook/quries'
+import { RoomList } from '@/api/room/types'
 
-interface RoomList {
-  id: number
-  roomCode: string
-}
 export function Room() {
   const [activeTab, setActiveTab] = useState<string>('create')
   const [mode, setMode] = useState<'create' | 'join'>('create')

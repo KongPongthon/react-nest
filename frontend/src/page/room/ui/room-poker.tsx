@@ -22,7 +22,7 @@ export function RoomPoker() {
           กลับหน้าแรก
         </button>
       </div>
-      <RoomPokerDetail />
+      <RoomPokerDetail id={id} />
     </div>
   )
 }

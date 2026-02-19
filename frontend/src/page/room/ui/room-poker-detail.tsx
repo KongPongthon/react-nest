@@ -1,3 +1,4 @@
+import { useSitdown } from '@/api/room/hook/mutation'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { cn } from '@/lib/utils'
 import { Crown, Plus } from 'lucide-react'
@@ -10,13 +11,14 @@ interface Person {
   index: number
 }
 
-export function RoomPokerDetail() {
-  const { on, send } = useWebSocket()
+export function RoomPokerDetail({ id }: { id: string }) {
+  const { on, idConnect } = useWebSocket()
 
   const [people, setPeople] = useState<Person[]>([])
   const [peopleSitdown, setPeopleSitdown] = useState<Person[]>([])
   const radius = 250
   const MAX_SEATS = 10
+  const sitdown = useSitdown()
 
   useEffect(() => {
     const unsubscribeList = on('join-room', (roomsList) => {
@@ -51,10 +53,19 @@ export function RoomPokerDetail() {
     })
   }, [peopleSitdown])
 
-  const Sitdown = (index: number) => {
-    const MY_ID = 'me-124'
+  const handleSitdown = async (index: number) => {
+    // const MY_ID = 'me-124'
     // console.log('TESTINdex', index)
-    send('sitdown', { index: index, id: MY_ID })
+    // send('sitdown', { index: index, id: MY_ID })
+    try {
+      await sitdown.mutateAsync({
+        indexChair: index.toString(),
+        idConnect: idConnect,
+        roomId: id,
+      })
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   return (
@@ -87,7 +98,7 @@ export function RoomPokerDetail() {
                   group-hover:scale-110 transition-transform cursor-pointer border-emerald-500 bg-slate-700
                 `,
                     )}
-                    onClick={() => Sitdown(person.index)}
+                    onClick={() => handleSitdown(person.index)}
                   >
                     <Plus />
                   </div>
@@ -101,7 +112,7 @@ export function RoomPokerDetail() {
                   group-hover:scale-110 transition-transform cursor-pointer border-emerald-500 bg-slate-700
                 `,
                     )}
-                    onClick={() => Sitdown(person.index)}
+                    onClick={() => handleSitdown(person.index)}
                   >
                     {person.role === 'Host' && (
                       <Crown className="top-0 left-1/2 transform -translate-x-1/2 absolute" />

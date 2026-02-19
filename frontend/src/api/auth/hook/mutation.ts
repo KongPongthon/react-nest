@@ -12,3 +12,9 @@ export function useAuthLogin(
 ) {
   return authQueries.authLogin.useMutation(option)
 }
+
+export function useAuthRefresh(
+  option?: inferOptions<typeof authQueries.authRefresh>,
+) {
+  return authQueries.authRefresh.useMutation(option)
+}

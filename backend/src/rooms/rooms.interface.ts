@@ -35,3 +35,8 @@ export interface SeatInfo {
   userName: string;
   index: number;
 }
+
+export interface UserStage {
+  id: string;
+  email: string;
+}

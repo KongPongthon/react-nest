@@ -1,5 +1,5 @@
 import { router } from 'react-query-kit'
-import { apiAuthorized, apiLogin } from './api'
+import { apiAuthorized, apiLogin, apiOauth } from './api'
 
 export const authQueries = router('auth', {
   authAuthorized: router.mutation({
@@ -7,5 +7,8 @@ export const authQueries = router('auth', {
   }),
   authLogin: router.mutation({
     mutationFn: apiLogin,
+  }),
+  authRefresh: router.mutation({
+    mutationFn: apiOauth,
   }),
 })

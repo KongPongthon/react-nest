@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
-import { WebSocketMessage } from './rooms.interface';
+import { Rooms, WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
@@ -82,11 +82,7 @@ export class RoomsGateway {
   }
 
   handleDisconnect(client: WebSocket) {
-    // const clientID = this.clients.get(client);
-    // console.log('TESTClient', client);
-
     const roomID = this.clientToRoom.get(client);
-
     if (roomID) {
       this.RoomStateService.roomMembers.get(roomID)?.delete(client);
       if (this.RoomStateService.roomMembers.get(roomID)?.size === 0) {
@@ -137,47 +133,33 @@ export class RoomsGateway {
       this.logger.log(`📨 Message from ${clientId}: ${message.event}`);
       let roomId: string | undefined;
       switch (message.event) {
-        case 'sitdown':
-          roomId = this.clientToRoom.get(client);
-          if (roomId) {
-            this.sitdown(roomId, message.data);
-          } else {
-            this.logger.warn(`❌ Client ${clientId} ยังไม่ได้ join room`);
-            client.send(
-              JSON.stringify({
-                event: 'error',
-                data: { message: 'กรุณา join room ก่อน' },
-              }),
-            );
-          }
-          break;
         case 'leave_room':
           roomId = this.clientToRoom.get(client);
 
           if (roomId) {
-            const clientSocket = this.findSocketById(roomId);
             const roomMembers = this.RoomStateService.roomMembers.get(roomId);
 
             if (roomMembers) {
-              // 1. ลบคนออกก่อน
               roomMembers.delete(client);
               this.clientToRoom.delete(client);
-
-              // 2. เก็บจำนวนคนที่เหลือไว้ก่อนจะเช็คว่าต้องลบห้องไหม
               const remainingCount = roomMembers.size;
-
               if (remainingCount > 0) {
-                // 3. ถ้ายังมีคนเหลือ ให้ Broadcast บอกคนที่เหลือว่ามีคนออก
                 this.broadcastToRoom(roomId, {
-                  event: 'leave-room', // เปลี่ยนจาก join-room เป็น leave-room ให้สื่อสารชัดเจน
+                  event: 'leave-room',
                   data: {
-                    username: this.clients.get(clientSocket),
+                    username: this.clients.get(client),
                     memberCount: remainingCount,
                   },
                 });
               } else {
-                // 4. ถ้าไม่เหลือใครแล้ว ถึงค่อยลบห้องทิ้งจากระบบ
-                this.RoomStateService.roomMembers.delete(roomId);
+                roomMembers.delete(client);
+                const room = this.RoomService.getRoomById(
+                  parseInt(roomId),
+                ) as Rooms;
+                if (room) {
+                  this.RoomStateService.rooms.delete(room.roomCode);
+                }
+                this.RoomStateService.rooms.delete(roomId);
                 console.log(
                   `Room ${roomId} is now empty and has been removed.`,
                 );
@@ -246,45 +228,56 @@ export class RoomsGateway {
     });
   }
 
-  private sitdown(roomId: string, data: { index: number; id: string }) {
-    const { index, id } = data;
-    console.log('index id :', index, id, roomId);
-
-    if (!roomId) return;
-    if (!this.RoomStateService.roomSeats.has(roomId)) {
-      this.RoomStateService.roomSeats.set(roomId, new Map());
-    }
-
-    const seats = this.RoomStateService.roomSeats.get(roomId);
-    if (!seats) return;
-    const myCurrentSeatIndex = Array.from(seats.entries()).find(
-      // eslint-disable-next-line
-      ([_, seat]) => seat.userId === id,
-    )?.[0];
-
-    const existingInSeat = seats.get(index);
-    if (existingInSeat && existingInSeat.userId === id) {
-      seats.delete(index);
-    } else if (!existingInSeat) {
-      if (myCurrentSeatIndex !== undefined) {
-        seats.delete(myCurrentSeatIndex);
-      }
-      seats.set(index, { userId: id, userName: id, index });
-    } else {
-      console.log(`⚠️ ที่นั่ง ${index} มีคนนั่งอยู่แล้ว`);
+  sitdownNew(client: string, index: number, email: string) {
+    const clientSocket = this.findSocketById(client);
+    if (!clientSocket) {
+      console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
       return;
     }
-    const updatedSeats = Array.from(seats.values());
-    console.log('updatedSeats', updatedSeats);
+    const roomId = this.clientToRoom.get(clientSocket);
+    if (roomId) {
+      // this.sitdown(roomId, { index, id: client, email: email });
+      if (!this.RoomStateService.roomSeats.has(roomId)) {
+        this.RoomStateService.roomSeats.set(roomId, new Map());
+      }
+      const seats = this.RoomStateService.roomSeats.get(roomId);
+      if (!seats) return;
+      const myCurrentSeatIndex = Array.from(seats.entries()).find(
+        // eslint-disable-next-line
+        ([_, seat]) => seat.userId === client,
+      )?.[0];
+      const existingInSeat = seats.get(index);
+      if (existingInSeat && existingInSeat.userId === client) {
+        seats.delete(index);
+      } else if (!existingInSeat) {
+        if (myCurrentSeatIndex !== undefined) {
+          seats.delete(myCurrentSeatIndex);
+        }
+        seats.set(index, { userId: client, userName: email, index });
+      } else {
+        console.log(`⚠️ ที่นั่ง ${index} มีคนนั่งอยู่แล้ว`);
+        return;
+      }
+      const updatedSeats = Array.from(seats.values());
+      console.log('updatedSeats', updatedSeats);
 
-    // **Broadcast ไปยังทุกคนในห้องผ่าน method ที่มีอยู่แล้ว**
-    this.broadcastToRoom(roomId, {
-      event: 'update-seats',
-      data: {
-        seats: updatedSeats,
-        roomId: roomId,
-      },
-    });
+      // **Broadcast ไปยังทุกคนในห้องผ่าน method ที่มีอยู่แล้ว**
+      this.broadcastToRoom(roomId, {
+        event: 'update-seats',
+        data: {
+          seats: updatedSeats,
+          roomId: roomId,
+        },
+      });
+    } else {
+      this.logger.warn(`❌ Client ${roomId} ยังไม่ได้ join room`);
+      clientSocket.send(
+        JSON.stringify({
+          event: 'error',
+          data: { message: 'กรุณา join room ก่อน' },
+        }),
+      );
+    }
   }
 
   private generateClientId(): string {

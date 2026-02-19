@@ -12,3 +12,9 @@ export function useJoinRoom(
 ) {
   return RoomQueries.joinRoom.useMutation(option)
 }
+
+export function useSitdown(
+  option?: inferOptions<typeof RoomQueries.postSitdown>,
+) {
+  return RoomQueries.postSitdown.useMutation(option)
+}

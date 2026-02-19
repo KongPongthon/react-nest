@@ -1,4 +1,4 @@
-import { apiOauth } from '@/api/auth/api'
+import { apiLogin, apiOauth } from '@/api/auth/api'
 import { API_URL } from '@/constants'
 import { getScope } from '@/lib/oauth-script'
 
@@ -23,11 +23,16 @@ client.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      await apiOauth({
+      const dataOauth = await apiOauth({
         refresh_token: localStorage.getItem('refresh_token') ?? '',
         getScope: getScope(),
       })
-      return client(error.config)
+
+      localStorage.setItem('refresh_token', dataOauth.refresh_token)
+
+      await apiLogin(dataOauth.access_token)
+
+      return client.request(error.config)
     }
     return Promise.reject(error)
   },

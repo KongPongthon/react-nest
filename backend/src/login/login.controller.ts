@@ -12,7 +12,7 @@ import { LoginService } from './login.service';
 import { AuthGuard } from './auth.guard';
 import type { Request } from 'express';
 
-export const CurrentUser = createParamDecorator(
+const CurrentUser = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
     return request['user'] as JWTPayload;
@@ -67,6 +67,7 @@ export class LoginController {
       const token = this.service.JWTGenerate({
         name: user.name,
         id: user.appid,
+        email: user.email,
       });
 
       console.log('Token', token);
