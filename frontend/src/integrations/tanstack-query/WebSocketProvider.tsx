@@ -86,6 +86,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     ws.onerror = (err) => {
+      RefreshToken()
+      setIsConnected(false)
       console.error('🔴 WebSocket error', err)
     }
 
@@ -109,19 +111,16 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const RefreshToken = async () => {
     try {
-      await authRefresh.mutateAsync(
-        {
-          refresh_token: localStorage.getItem('refresh_token') ?? '',
-          getScope: getScope(),
-        },
-        {
-          onSuccess: async (data: IRefreshToken) => {
-            localStorage.setItem('refresh_token', data.refresh_token)
-            await authLogin.mutateAsync(data.access_token)
-          },
-          onError: () => router.navigate({ to: `/`, replace: true }),
-        },
-      )
+      const data_token = await authRefresh.mutateAsync({
+        refresh_token: localStorage.getItem('refresh_token') ?? '',
+        getScope: getScope(),
+      })
+
+      localStorage.setItem('refresh_token', data_token.refresh_token)
+      authLogin
+        .mutateAsync(data_token.access_token)
+        .then(() => router.navigate({ to: '/room', replace: true }))
+        .catch(() => router.navigate({ to: `/`, replace: true }))
     } catch (error) {
       console.error(error)
       throw error

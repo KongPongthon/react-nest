@@ -5,7 +5,6 @@ import { Rooms, WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
-import { LoginService } from 'src/login/login.service';
 
 @WebSocketGateway({
   cors: {
@@ -17,6 +16,7 @@ export class RoomsGateway {
   server: Server;
 
   private clients = new Map<WebSocket, string>();
+  private clientsNew = new Map<string, WebSocket[]>();
 
   private clientToRoom = new Map<WebSocket, string>();
 
@@ -25,14 +25,9 @@ export class RoomsGateway {
   constructor(
     private readonly RoomStateService: RoomStateService,
     private readonly RoomService: RoomsService,
-    private readonly LoginService: LoginService,
   ) {}
 
-  //eslint-disable-next-line
   handleConnection(client: WebSocket, request: IncomingMessage) {
-    const clientID = this.generateClientId();
-    this.clients.set(client, clientID);
-
     const url = new URL(request.url ?? '', 'http://localhost');
 
     console.log('Path:', url.pathname);
@@ -45,7 +40,7 @@ export class RoomsGateway {
       });
     }
 
-    const check_token = this.LoginService.verify(token?.toString() ?? '');
+    const check_token = this.RoomService.verify(token?.toString() ?? '');
 
     if (!check_token) {
       this.sendToClient(client, {
@@ -53,6 +48,16 @@ export class RoomsGateway {
         data: { message: 'Token not found' },
       });
     }
+
+    this.logger.log('check_token', check_token);
+
+    const clientID = this.generateClientId();
+    this.clientsNew.set(check_token.id, [
+      ...(this.clientsNew.get(check_token.id) ?? []),
+      client,
+    ]);
+
+    this.clients.set(client, clientID);
 
     this.logger.log(
       `✅ Client connected: ${clientID} (Total: ${this.clients.size})`,
@@ -99,12 +104,45 @@ export class RoomsGateway {
       console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
       return;
     }
+    const oldRoomId = this.clientToRoom.get(clientSocket);
+
+    if (oldRoomId === roomId) {
+      return;
+    }
+
+    if (oldRoomId) {
+      const oldRoomMembers = this.RoomStateService.roomMembers.get(oldRoomId);
+      if (oldRoomMembers) {
+        oldRoomMembers.delete(clientSocket);
+
+        if (oldRoomMembers.size === 0) {
+          this.RoomStateService.roomMembers.delete(oldRoomId);
+        } else {
+          this.broadcastToRoom(oldRoomId, {
+            event: 'leave-room',
+            data: {
+              username: this.clients.get(clientSocket),
+              memberCount: oldRoomMembers.size,
+            },
+          });
+        }
+      }
+    }
 
     if (!this.RoomStateService.roomMembers.has(roomId)) {
       this.RoomStateService.roomMembers.set(roomId, new Set<WebSocket>());
     }
     this.RoomStateService.roomMembers?.get(roomId)?.add(clientSocket);
     this.clientToRoom.set(clientSocket, roomId);
+
+    // const myUsername = this.clients.get(clientSocket);
+    // this.sendToClient(clientSocket, {
+    //   event: 'joined-success',
+    //   data: {
+    //     roomId: roomId,
+    //     username: myUsername,
+    //   },
+    // });
     this.broadcastToRoom(roomId, {
       event: 'join-room',
       data: {
@@ -228,12 +266,19 @@ export class RoomsGateway {
     });
   }
 
-  sitdownNew(client: string, index: number, email: string) {
+  sitdownNew(client: string, index: number, email: string, id: string) {
     const clientSocket = this.findSocketById(client);
+
     if (!clientSocket) {
       console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
       return;
     }
+    const oldRoomId = this.clientToRoom.get(clientSocket);
+    if (oldRoomId) {
+      const oldRoomMembers = this.RoomStateService.roomMembers.get(oldRoomId);
+      console.log('oldRoomMembers', oldRoomMembers);
+    }
+
     const roomId = this.clientToRoom.get(clientSocket);
     if (roomId) {
       // this.sitdown(roomId, { index, id: client, email: email });
@@ -244,16 +289,16 @@ export class RoomsGateway {
       if (!seats) return;
       const myCurrentSeatIndex = Array.from(seats.entries()).find(
         // eslint-disable-next-line
-        ([_, seat]) => seat.userId === client,
+        ([_, seat]) => seat.userId === id,
       )?.[0];
       const existingInSeat = seats.get(index);
-      if (existingInSeat && existingInSeat.userId === client) {
+      if (existingInSeat && existingInSeat.userId === id) {
         seats.delete(index);
       } else if (!existingInSeat) {
         if (myCurrentSeatIndex !== undefined) {
           seats.delete(myCurrentSeatIndex);
         }
-        seats.set(index, { userId: client, userName: email, index });
+        seats.set(index, { userId: id, userName: email, index });
       } else {
         console.log(`⚠️ ที่นั่ง ${index} มีคนนั่งอยู่แล้ว`);
         return;

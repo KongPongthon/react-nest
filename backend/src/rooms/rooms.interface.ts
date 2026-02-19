@@ -40,3 +40,11 @@ export interface UserStage {
   id: string;
   email: string;
 }
+
+export interface UserConnectSocket {
+  name: string;
+  id: string;
+  email: string;
+  iat: number;
+  exp: number;
+}

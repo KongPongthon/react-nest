@@ -16,6 +16,7 @@ import { TablesRooms } from './rooms.interface';
 import { AuthGuard } from './auth.guard';
 
 interface JWTPayload {
+  id: string;
   aud: string;
   iss: string;
   iat: number;
@@ -143,6 +144,7 @@ export class RoomsController {
         body.idConnect,
         parseInt(body.indexChair),
         user.email,
+        user.id,
       );
     } catch (error) {
       this.logger.error(error);

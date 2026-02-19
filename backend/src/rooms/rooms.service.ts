@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
-import { Rooms } from './rooms.interface';
+import { Rooms, UserConnectSocket } from './rooms.interface';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
@@ -67,13 +67,13 @@ export class RoomsService {
     return code;
   }
 
-  verify(token: string) {
+  verify(token: string): UserConnectSocket {
     try {
       const secret = process.env.JWT_SECRET;
       if (!secret) {
         throw new Error('JWT_SECRET is not defined in env');
       }
-      const payload = jwt.verify(token, secret);
+      const payload = jwt.verify(token, secret) as UserConnectSocket;
       return payload;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
