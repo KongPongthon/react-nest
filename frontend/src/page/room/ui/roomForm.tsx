@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
 
 interface IRoomFormProps {
+  name: string
   onCreateRoom: () => void
   onJoinRoom: (roomCode: string) => void
   setMode: (mode: 'create' | 'join') => void
@@ -13,6 +14,7 @@ interface IRoomFormProps {
   setRoomCode: (roomCode: string) => void
 }
 export function RoomForm({
+  name,
   onCreateRoom,
   onJoinRoom,
   setMode,
@@ -35,6 +37,8 @@ export function RoomForm({
           {/* Mode Tabs */}
           <div className="flex rounded-xl bg-card border border-border p-1">
             <button
+              type="button"
+              data-testid="create-room-button"
               onClick={() => setMode('create')}
               className={cn(
                 `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20`,
@@ -47,6 +51,7 @@ export function RoomForm({
               สร้างห้อง
             </button>
             <button
+              type="button"
               onClick={() => setMode('join')}
               className={cn(
                 `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20 `,
@@ -109,6 +114,8 @@ export function RoomForm({
             )}
 
             <Button
+              type="button"
+              data-testid={name}
               type="submit"
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-6 border hover:cursor-pointer"
             >

@@ -62,16 +62,10 @@ export class RoomsController {
   ) {}
   @UseGuards(AuthGuard)
   @Post()
-  addRoom(@CurrentUser() user: JWTPayload) {
+  addRoom() {
     try {
-      console.log('TEST User', user);
-      if (!user) {
-        return { error: 'An error occurred' };
-      }
       const data = this.RoomsService.createdRoom();
       console.log('Data', data);
-
-      // console.log('TEST DATA', data);
       if (!data.success) {
         return { error: 'An error occurred' };
       } else {

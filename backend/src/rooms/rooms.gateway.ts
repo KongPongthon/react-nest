@@ -16,7 +16,7 @@ export class RoomsGateway {
   server: Server;
 
   private clients = new Map<WebSocket, string>();
-  private clientsNew = new Map<string, WebSocket[]>();
+  // private clientsNew = new Map<string, WebSocket[]>();
 
   private clientToRoom = new Map<WebSocket, string>();
 
@@ -51,20 +51,20 @@ export class RoomsGateway {
 
     this.logger.log('check_token', check_token);
 
-    const clientID = this.generateClientId();
-    this.clientsNew.set(check_token.id, [
-      ...(this.clientsNew.get(check_token.id) ?? []),
-      client,
-    ]);
+    // const clientID = this.generateClientId();
+    // this.clientsNew.set(check_token.id, [
+    //   ...(this.clientsNew.get(check_token.id) ?? []),
+    //   client,
+    // ]);
 
-    this.clients.set(client, clientID);
+    this.clients.set(client, check_token.id);
 
     this.logger.log(
-      `✅ Client connected: ${clientID} (Total: ${this.clients.size})`,
+      `✅ Client connected: ${check_token.id} (Total: ${this.clients.size})`,
     );
     try {
       const rooms = this.RoomService.getRoom();
-      this.logger.log(`📤 Sending ${rooms.length} rooms to ${clientID}`);
+      this.logger.log(`📤 Sending ${rooms.length} rooms to ${check_token.id}`);
 
       this.sendToClient(client, {
         event: 'rooms-list',
@@ -72,7 +72,7 @@ export class RoomsGateway {
       });
       this.sendToClient(client, {
         event: 'connect',
-        data: { username: clientID },
+        data: { username: check_token.id },
       });
       client.on('message', (data: Buffer) => {
         this.handleMessage(client, data);
