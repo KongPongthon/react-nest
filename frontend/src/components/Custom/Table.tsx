@@ -20,6 +20,7 @@ interface TableProps<T> {
   page: number
   rowsPerPage: number
   handleOnChange?: (data: T) => void
+  render?: (item: T) => React.ReactNode
 }
 export function CustomTable<T>({
   columns,
@@ -28,6 +29,7 @@ export function CustomTable<T>({
   page,
   rowsPerPage,
   handleOnChange,
+  render,
 }: TableProps<T>) {
   const handleChangeColumn = (data: T) => {
     handleOnChange?.(data)
@@ -40,6 +42,7 @@ export function CustomTable<T>({
     }
     return item[col.key]
   }
+
   return (
     <div>
       <Table className="border w-full overflow-x-auto rounded-lg">
@@ -63,7 +66,9 @@ export function CustomTable<T>({
               </TableCell>
               {columns.map((col, idx) => (
                 <TableCell key={`${idx}`}>
-                  {renderValue(item, col) as React.ReactNode}
+                  {render
+                    ? render(item)
+                    : (renderValue(item, col) as React.ReactNode)}
                 </TableCell>
               ))}
             </TableRow>

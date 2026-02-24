@@ -3,33 +3,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
-
-interface IRoomFormProps {
+import { useRoom } from '../hook'
+interface RoomFormProps {
   name: string
-  onCreateRoom: () => void
-  onJoinRoom: (roomCode: string) => void
-  setMode: (mode: 'create' | 'join') => void
-  mode: 'create' | 'join'
-  roomCode: string
-  setRoomCode: (roomCode: string) => void
 }
-export function RoomForm({
-  name,
-  onCreateRoom,
-  onJoinRoom,
-  setMode,
-  mode,
-  roomCode,
-  setRoomCode,
-}: IRoomFormProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (mode === 'create') {
-      onCreateRoom()
-    } else {
-      onJoinRoom(roomCode.trim().toUpperCase())
-    }
-  }
+export function RoomForm({ name }: RoomFormProps) {
+  const { mode, setMode, roomCode, setRoomCode, handleSubmit } = useRoom()
   return (
     <div>
       <div className="w-full h-full flex items-center justify-center">
@@ -52,6 +31,7 @@ export function RoomForm({
             </button>
             <button
               type="button"
+              data-testid="join-room-button"
               onClick={() => setMode('join')}
               className={cn(
                 `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20 `,
@@ -114,9 +94,8 @@ export function RoomForm({
             )}
 
             <Button
-              type="button"
-              data-testid={name}
               type="submit"
+              data-testid={name}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-6 border hover:cursor-pointer"
             >
               {mode === 'create' ? 'สร้างห้องใหม่' : 'เข้าร่วมห้อง'}

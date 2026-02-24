@@ -62,7 +62,7 @@ export class LoginService {
         { name: data.name, id: data.id, email: data.email },
         this.secret,
         {
-          expiresIn: '3m',
+          expiresIn: '40m',
           algorithm: 'HS256',
         },
       );

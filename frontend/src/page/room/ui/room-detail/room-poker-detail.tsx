@@ -3,71 +3,10 @@ import { useWebSocket } from '@/hooks/useWebSocket'
 import { cn } from '@/lib/utils'
 import { Crown, Plus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { useRoomPoker } from './hook'
 
-interface Person {
-  id: string
-  userName: string
-  role: string
-  index: number
-}
-
-export function RoomPokerDetail({ id }: { id: string }) {
-  const { on, idConnect } = useWebSocket()
-
-  const [people, setPeople] = useState<Person[]>([])
-  const [peopleSitdown, setPeopleSitdown] = useState<Person[]>([])
-  const radius = 250
-  const MAX_SEATS = 10
-  const sitdown = useSitdown()
-
-  useEffect(() => {
-    const unsubscribeList = on('join-room', (roomsList) => {
-      console.log('📋 Received Join Room:', roomsList)
-      setPeople(roomsList)
-    })
-
-    const unsubscribeSitdown = on('update-seats', (roomsList) => {
-      console.log('📋 Received Join Room Sitdown:', roomsList)
-      setPeopleSitdown(roomsList.seats)
-    })
-    return () => {
-      ;(unsubscribeList(), unsubscribeSitdown())
-    }
-  }, [on])
-
-  const memberSitDown = useMemo(() => {
-    return Array.from({ length: MAX_SEATS }, (_, i) => {
-      const personInSeat = peopleSitdown.find((p) => p.index === i)
-
-      if (personInSeat) {
-        return { ...personInSeat, isOccupied: true }
-      }
-
-      return {
-        id: `empty-${i}`,
-        userName: 'Empty Seat',
-        role: 'Guest',
-        index: i,
-        isOccupied: false,
-      }
-    })
-  }, [peopleSitdown])
-
-  const handleSitdown = async (index: number) => {
-    // const MY_ID = 'me-124'
-    // console.log('TESTINdex', index)
-    // send('sitdown', { index: index, id: MY_ID })
-    try {
-      await sitdown.mutateAsync({
-        indexChair: index.toString(),
-        idConnect: idConnect,
-        roomId: id,
-      })
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
+export function RoomPokerDetail() {
+  const { memberSitDown, handleSitdown, radius } = useRoomPoker()
   return (
     <div className="h-full w-full flex justify-center items-center min-h-150">
       <div className="relative flex items-center justify-center">
@@ -92,6 +31,7 @@ export function RoomPokerDetail({ id }: { id: string }) {
               {person.role === 'Guest' ? (
                 <div className="flex flex-col items-center group">
                   <div
+                    data-testid={`sitdown-${person.index}`}
                     className={cn(
                       `
                   w-16 h-16 rounded-full border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
@@ -106,6 +46,7 @@ export function RoomPokerDetail({ id }: { id: string }) {
               ) : (
                 <div className="flex flex-col items-center group">
                   <div
+                    data-testid={`situp-${person.index}`}
                     className={cn(
                       `
                   w-16 h-16 rounded-full border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
@@ -115,7 +56,10 @@ export function RoomPokerDetail({ id }: { id: string }) {
                     onClick={() => handleSitdown(person.index)}
                   >
                     {person.role === 'Host' && (
-                      <Crown className="top-0 left-1/2 transform -translate-x-1/2 absolute" />
+                      <Crown
+                        data-testid="host-icon"
+                        className="top-0 left-1/2 transform -translate-x-1/2 absolute"
+                      />
                     )}
                     {person.userName.charAt(0)}
                   </div>

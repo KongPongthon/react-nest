@@ -1,0 +1,21 @@
+// // test-utils.tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render } from '@testing-library/react'
+// import { WebSocketProvider } from './WebSocketProvider'
+
+// export function renderWithProviders(ui: React.ReactElement) {
+//   const queryClient = new QueryClient()
+
+//   return render(
+//     <QueryClientProvider client={queryClient}>
+//       <WebSocketProvider>{ui}</WebSocketProvider>
+//     </QueryClientProvider>,
+//   )
+// }
+export function renderWithProviders(ui: React.ReactElement) {
+  const queryClient = new QueryClient()
+
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  )
+}

@@ -17,9 +17,6 @@ export const apiOauth = async ({
         scope: getScope,
         refresh_token: refresh_token,
         grant_type: 'refresh_token',
-        // code: code,
-        // redirect_uri: redirectUrl,
-        // code_verifier: codeVerifier,
       },
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
     )
