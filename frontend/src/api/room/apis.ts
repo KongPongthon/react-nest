@@ -12,8 +12,14 @@ export const apiPostRoom = async () => {
 }
 
 export const apiJoinRoom = async (data: CreateRoomDto): Promise<string> => {
-  const res = await client.post('/rooms/join', data)
-  return res.data
+  try {
+    const res = await client.post('/rooms/join', data)
+    console.log('res.status', res.status)
+
+    return res.data
+  } catch (error) {
+    throw error
+  }
 }
 
 export const apiGetRooms = async (): Promise<RoomList[]> => {

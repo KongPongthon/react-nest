@@ -12,7 +12,7 @@ export class AuthGuard implements CanActivate {
   constructor(private service: LoginService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest();
-    console.log('request', request.headers);
+    // console.log('request', request.headers);
 
     const accessToken = request.headers.authorization;
     // console.log('accessToken', accessToken);

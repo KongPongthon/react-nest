@@ -23,6 +23,7 @@ client.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      localStorage.removeItem('access_token')
       const dataOauth = await apiOauth({
         refresh_token: localStorage.getItem('refresh_token') ?? '',
         getScope: getScope(),

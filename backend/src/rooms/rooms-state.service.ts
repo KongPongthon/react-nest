@@ -8,4 +8,8 @@ export class RoomStateService {
   public roomMembers = new Map<string, Set<WebSocket>>();
 
   public roomSeats = new Map<string, Map<number, SeatInfo>>();
+
+  public clients = new Map<WebSocket, string>();
+
+  public clientToRoom = new Map<WebSocket, string>();
 }

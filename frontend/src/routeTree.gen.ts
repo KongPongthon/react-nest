@@ -16,6 +16,7 @@ import { Route as DemoTanchatRouteImport } from './routes/demo/tanchat'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
 import { Route as ProtectRoomIndexRouteImport } from './routes/_protect/room/index'
+import { Route as ProtectPokerIndexRouteImport } from './routes/_protect/poker/index'
 import { Route as AuthAuthorizedIndexRouteImport } from './routes/_auth/authorized/index'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
@@ -63,6 +64,11 @@ const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
 const ProtectRoomIndexRoute = ProtectRoomIndexRouteImport.update({
   id: '/room/',
   path: '/room/',
+  getParentRoute: () => ProtectRouteRoute,
+} as any)
+const ProtectPokerIndexRoute = ProtectPokerIndexRouteImport.update({
+  id: '/poker/',
+  path: '/poker/',
   getParentRoute: () => ProtectRouteRoute,
 } as any)
 const AuthAuthorizedIndexRoute = AuthAuthorizedIndexRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/authorized/': typeof AuthAuthorizedIndexRoute
+  '/poker/': typeof ProtectPokerIndexRoute
   '/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/authorized': typeof AuthAuthorizedIndexRoute
+  '/poker': typeof ProtectPokerIndexRoute
   '/room': typeof ProtectRoomIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/_auth/authorized/': typeof AuthAuthorizedIndexRoute
+  '/_protect/poker/': typeof ProtectPokerIndexRoute
   '/_protect/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/authorized/'
+    | '/poker/'
     | '/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/authorized'
+    | '/poker'
     | '/room'
     | '/example/guitars'
     | '/demo/start/ssr/data-only'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/demo/start/server-funcs'
     | '/example/guitars/$guitarId'
     | '/_auth/authorized/'
+    | '/_protect/poker/'
     | '/_protect/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
@@ -345,6 +357,13 @@ declare module '@tanstack/react-router' {
       path: '/room'
       fullPath: '/room/'
       preLoaderRoute: typeof ProtectRoomIndexRouteImport
+      parentRoute: typeof ProtectRouteRoute
+    }
+    '/_protect/poker/': {
+      id: '/_protect/poker/'
+      path: '/poker'
+      fullPath: '/poker/'
+      preLoaderRoute: typeof ProtectPokerIndexRouteImport
       parentRoute: typeof ProtectRouteRoute
     }
     '/_auth/authorized/': {
@@ -449,11 +468,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface ProtectRouteRouteChildren {
+  ProtectPokerIndexRoute: typeof ProtectPokerIndexRoute
   ProtectRoomIndexRoute: typeof ProtectRoomIndexRoute
   ProtectRoomIdIndexRoute: typeof ProtectRoomIdIndexRoute
 }
 
 const ProtectRouteRouteChildren: ProtectRouteRouteChildren = {
+  ProtectPokerIndexRoute: ProtectPokerIndexRoute,
   ProtectRoomIndexRoute: ProtectRoomIndexRoute,
   ProtectRoomIdIndexRoute: ProtectRoomIdIndexRoute,
 }

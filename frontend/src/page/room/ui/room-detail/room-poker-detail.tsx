@@ -1,8 +1,5 @@
-import { useSitdown } from '@/api/room/hook/mutation'
-import { useWebSocket } from '@/hooks/useWebSocket'
 import { cn } from '@/lib/utils'
 import { Crown, Plus } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
 import { useRoomPoker } from './hook'
 
 export function RoomPokerDetail() {

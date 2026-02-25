@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
-import { Rooms, WebSocketMessage } from './rooms.interface';
+import { WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
@@ -14,11 +14,6 @@ import { IncomingMessage } from 'http';
 export class RoomsGateway {
   @WebSocketServer()
   server: Server;
-
-  private clients = new Map<WebSocket, string>();
-  // private clientsNew = new Map<string, WebSocket[]>();
-
-  private clientToRoom = new Map<WebSocket, string>();
 
   private readonly logger = new Logger(RoomsGateway.name);
 
@@ -48,19 +43,25 @@ export class RoomsGateway {
         data: { message: 'Token not found' },
       });
     }
+    const existingSocket = this.findSocketById(check_token.id);
+    console.log('existing socket found?', !!existingSocket);
+    console.log('existing === new client?', existingSocket === client);
 
     this.logger.log('check_token', check_token);
 
-    // const clientID = this.generateClientId();
-    // this.clientsNew.set(check_token.id, [
-    //   ...(this.clientsNew.get(check_token.id) ?? []),
-    //   client,
-    // ]);
+    if (existingSocket && existingSocket !== client) {
+      const oldRoomId = this.RoomStateService.clientToRoom.get(existingSocket);
+      if (oldRoomId) {
+        this.performLeaveRoom(existingSocket, oldRoomId);
+      }
+      this.RoomStateService.clients.delete(existingSocket);
+      existingSocket.terminate();
+    }
 
-    this.clients.set(client, check_token.id);
+    this.RoomStateService.clients.set(client, check_token.id);
 
     this.logger.log(
-      `✅ Client connected: ${check_token.id} (Total: ${this.clients.size})`,
+      `✅ Client connected: ${check_token.id} (Total: ${this.RoomStateService.clients.size})`,
     );
     try {
       const rooms = this.RoomService.getRoom();
@@ -87,78 +88,118 @@ export class RoomsGateway {
   }
 
   handleDisconnect(client: WebSocket) {
-    const roomID = this.clientToRoom.get(client);
+    const roomID = this.RoomStateService.clientToRoom.get(client);
     if (roomID) {
       this.RoomStateService.roomMembers.get(roomID)?.delete(client);
       if (this.RoomStateService.roomMembers.get(roomID)?.size === 0) {
         this.RoomStateService.roomMembers.delete(roomID);
       }
     }
-    this.clients.delete(client);
-    this.clientToRoom.delete(client);
+    this.RoomStateService.clients.delete(client);
+    this.RoomStateService.clientToRoom.delete(client);
   }
 
-  handleJoinRoom(client: string, roomId: string) {
-    const clientSocket = this.findSocketById(client);
-    if (!clientSocket) {
-      console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
-      return;
-    }
-    const oldRoomId = this.clientToRoom.get(clientSocket);
+  private performLeaveRoom(clientSocket: WebSocket, roomId: string) {
+    console.log('roomID', roomId);
 
-    if (oldRoomId === roomId) {
-      return;
+    const roomMembers = this.RoomStateService.roomMembers.get(roomId);
+    if (!roomMembers) return;
+
+    // ลบออกจากห้อง
+    roomMembers.delete(clientSocket);
+    this.RoomStateService.clientToRoom.delete(clientSocket);
+
+    const remainingCount = roomMembers.size;
+
+    if (remainingCount > 0) {
+      // ส่งข่าวบอกคนที่เหลือ
+      this.broadcastToRoom(roomId, {
+        event: 'leave-room',
+        data: {
+          username: this.RoomStateService.clients.get(clientSocket),
+          memberCount: remainingCount,
+        },
+      });
+    } else {
+      // ถ้าไม่เหลือใครเลย ล้างข้อมูลห้องให้เกลี้ยง
+      this.RoomStateService.roomMembers.delete(roomId);
+      this.RoomStateService.roomSeats?.delete(roomId); // อย่าลืมลบที่นั่งด้วย!
+      this.logger.log(`🗑️ Room ${roomId} has been cleaned up.`);
     }
+  }
+
+  // handleJoinRoom(client: string, roomId: string) {
+  //   const clientSocket = this.findSocketById(client);
+  //   if (!clientSocket) {
+  //     console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
+  //     return;
+  //   }
+  //   const oldRoomId = this.RoomStateService.clientToRoom.get(clientSocket);
+
+  //   if (oldRoomId === roomId) {
+  //     return;
+  //   }
+
+  //   if (oldRoomId) {
+  //     const oldRoomMembers = this.RoomStateService.roomMembers.get(oldRoomId);
+  //     if (oldRoomMembers) {
+  //       oldRoomMembers.delete(clientSocket);
+
+  //       if (oldRoomMembers.size === 0) {
+  //         this.RoomStateService.roomMembers.delete(oldRoomId);
+  //       } else {
+  //         this.broadcastToRoom(oldRoomId, {
+  //           event: 'leave-room',
+  //           data: {
+  //             username: this.RoomStateService.clients.get(clientSocket),
+  //             memberCount: oldRoomMembers.size,
+  //           },
+  //         });
+  //       }
+  //     }
+  //   }
+
+  //   if (!this.RoomStateService.roomMembers.has(roomId)) {
+  //     this.RoomStateService.roomMembers.set(roomId, new Set<WebSocket>());
+  //   }
+  //   this.RoomStateService.roomMembers?.get(roomId)?.add(clientSocket);
+  //   this.RoomStateService.clientToRoom.set(clientSocket, roomId);
+  //   this.broadcastToRoom(roomId, {
+  //     event: 'join-room',
+  //     data: {
+  //       username: this.RoomStateService.clients.get(clientSocket),
+  //       memberCount: this.RoomStateService.roomMembers.get(roomId)?.size,
+  //     },
+  //   });
+  // }
+
+  // 2. แก้ไข handleJoinRoom ให้เรียกใช้ฟังก์ชันกลาง
+  handleJoinRoom(clientId: string, roomId: string) {
+    const clientSocket = this.findSocketById(clientId);
+    if (!clientSocket) return;
+
+    const oldRoomId = this.RoomStateService.clientToRoom.get(clientSocket);
+    if (oldRoomId === roomId) return;
 
     if (oldRoomId) {
-      const oldRoomMembers = this.RoomStateService.roomMembers.get(oldRoomId);
-      if (oldRoomMembers) {
-        oldRoomMembers.delete(clientSocket);
-
-        if (oldRoomMembers.size === 0) {
-          this.RoomStateService.roomMembers.delete(oldRoomId);
-        } else {
-          this.broadcastToRoom(oldRoomId, {
-            event: 'leave-room',
-            data: {
-              username: this.clients.get(clientSocket),
-              memberCount: oldRoomMembers.size,
-            },
-          });
-        }
-      }
+      this.performLeaveRoom(clientSocket, oldRoomId);
     }
 
+    // --- ส่วนการ Join ห้องใหม่ ---
     if (!this.RoomStateService.roomMembers.has(roomId)) {
       this.RoomStateService.roomMembers.set(roomId, new Set<WebSocket>());
     }
-    this.RoomStateService.roomMembers?.get(roomId)?.add(clientSocket);
-    this.clientToRoom.set(clientSocket, roomId);
 
-    // const myUsername = this.clients.get(clientSocket);
-    // this.sendToClient(clientSocket, {
-    //   event: 'joined-success',
-    //   data: {
-    //     roomId: roomId,
-    //     username: myUsername,
-    //   },
-    // });
+    this.RoomStateService.roomMembers.get(roomId)?.add(clientSocket);
+    this.RoomStateService.clientToRoom.set(clientSocket, roomId);
+
     this.broadcastToRoom(roomId, {
       event: 'join-room',
       data: {
-        username: this.clients.get(clientSocket),
+        username: this.RoomStateService.clients.get(clientSocket),
         memberCount: this.RoomStateService.roomMembers.get(roomId)?.size,
       },
     });
-  }
-
-  // เมื่อมีคนออกจากห้อง
-  handleLeaveRoom(client: WebSocket) {
-    const roomId = this.clientToRoom.get(client);
-    if (roomId) {
-      this.RoomStateService.roomMembers.get(roomId)?.delete(client); // ← สำคัญ!
-      this.clientToRoom.delete(client);
-    }
   }
 
   private handleMessage(client: WebSocket, data: Buffer) {
@@ -167,42 +208,35 @@ export class RoomsGateway {
         data.toString(),
       ) as WebSocketMessage;
 
-      const clientId = this.clients.get(client) || 'unknown';
-      this.logger.log(`📨 Message from ${clientId}: ${message.event}`);
+      const clientId = this.RoomStateService.clients.get(client) || 'unknown';
+      this.logger.log(
+        `📨 Message from ${clientId}: ${message.event} ${message.data}`,
+      );
       let roomId: string | undefined;
       switch (message.event) {
         case 'leave_room':
-          roomId = this.clientToRoom.get(client);
+          console.log('=== DEBUG leave_room ===');
+          console.log(
+            'incoming client object id exists in clients map:',
+            this.RoomStateService.clients.has(client),
+          );
 
+          // แสดงทุก socket ใน clientToRoom
+          this.RoomStateService.clientToRoom.forEach((room, ws) => {
+            console.log(
+              'ws === client:',
+              ws === client, // true = object เดียวกัน
+              '| clientId:',
+              this.RoomStateService.clients.get(ws),
+              '| room:',
+              room,
+            );
+          });
+
+          roomId = this.RoomStateService.clientToRoom.get(client);
+          console.log('roomId', roomId, clientId, message.data);
           if (roomId) {
-            const roomMembers = this.RoomStateService.roomMembers.get(roomId);
-
-            if (roomMembers) {
-              roomMembers.delete(client);
-              this.clientToRoom.delete(client);
-              const remainingCount = roomMembers.size;
-              if (remainingCount > 0) {
-                this.broadcastToRoom(roomId, {
-                  event: 'leave-room',
-                  data: {
-                    username: this.clients.get(client),
-                    memberCount: remainingCount,
-                  },
-                });
-              } else {
-                roomMembers.delete(client);
-                const room = this.RoomService.getRoomById(
-                  parseInt(roomId),
-                ) as Rooms;
-                if (room) {
-                  this.RoomStateService.rooms.delete(room.roomCode);
-                }
-                this.RoomStateService.rooms.delete(roomId);
-                console.log(
-                  `Room ${roomId} is now empty and has been removed.`,
-                );
-              }
-            }
+            this.performLeaveRoom(client, roomId);
           }
           break;
         default:
@@ -273,13 +307,13 @@ export class RoomsGateway {
       console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
       return;
     }
-    const oldRoomId = this.clientToRoom.get(clientSocket);
+    const oldRoomId = this.RoomStateService.clientToRoom.get(clientSocket);
     if (oldRoomId) {
       const oldRoomMembers = this.RoomStateService.roomMembers.get(oldRoomId);
       console.log('oldRoomMembers', oldRoomMembers);
     }
 
-    const roomId = this.clientToRoom.get(clientSocket);
+    const roomId = this.RoomStateService.clientToRoom.get(clientSocket);
     if (roomId) {
       // this.sitdown(roomId, { index, id: client, email: email });
       if (!this.RoomStateService.roomSeats.has(roomId)) {
@@ -325,13 +359,38 @@ export class RoomsGateway {
     }
   }
 
+  checkUserInRoom(client: string): boolean {
+    const clientSocket = this.findSocketById(client);
+    if (clientSocket) {
+      const roomId = this.RoomStateService.clientToRoom.get(clientSocket);
+      if (roomId) {
+        this.broadcast({
+          event: 'error',
+          data: { message: 'User already in room' },
+        });
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   private generateClientId(): string {
     return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   findSocketById(clientId: string): WebSocket | undefined {
-    for (const [socket, id] of this.clients.entries()) {
+    for (const [socket, id] of this.RoomStateService.clients.entries()) {
       if (id === clientId) {
+        return socket;
+      }
+    }
+    return undefined;
+  }
+
+  findSocketByRoomId(roomId: string): WebSocket | undefined {
+    for (const [socket, id] of this.RoomStateService.clientToRoom.entries()) {
+      if (id === roomId) {
         return socket;
       }
     }

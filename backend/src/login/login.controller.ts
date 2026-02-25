@@ -70,7 +70,7 @@ export class LoginController {
         email: user.email,
       });
 
-      console.log('Token', token);
+      // console.log('Token', token);
 
       return {
         message: 'Login สำเร็จ',

@@ -50,14 +50,14 @@ export class LoginService {
   }
 
   JWTGenerate(data: { name: string; id: string; email: string }): string {
-    console.log('JWT Generate');
+    // console.log('JWT Generate');
 
-    console.log('JWT Generate secret', this.secret);
+    // console.log('JWT Generate secret', this.secret);
     if (!this.secret) {
       throw new Error('JWT_SECRET is not defined in env');
     }
     try {
-      console.log('JWTGenerate', data);
+      // console.log('JWTGenerate', data);
       const accessToken = jwt.sign(
         { name: data.name, id: data.id, email: data.email },
         this.secret,
