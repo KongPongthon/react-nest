@@ -23,11 +23,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      exclude: [
-        'src/components/**', // 👈 ignore ทั้งโฟลเดอร์
-        'config/**',
-        'api/**',
-      ],
+      exclude: ['src/components/**', 'config/**', 'api/**'],
     },
   },
 })

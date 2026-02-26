@@ -62,6 +62,7 @@ export const apiLogin = async (data: string) => {
         enableBearer: false,
         headers: {
           Authorization: `Bearer ${data}`,
+          withCredentials: true,
         },
       },
     )

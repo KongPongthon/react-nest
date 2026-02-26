@@ -63,7 +63,7 @@ export function useRoomPoker() {
   }
 
   const handleCloseRoom = () => {
-    router.navigate({ to: '/room' })
+    router.navigate({ to: '/poker' })
     send('leave_room', id)
   }
 

@@ -43,6 +43,7 @@ client.interceptors.request.use((config) => {
   if (config.enableBearer) {
     const accessToken = localStorage.getItem('access_token')
     config.headers.Authorization = `Bearer ${accessToken}`
+    config.headers.withCredentials = true
   }
   return config
 })

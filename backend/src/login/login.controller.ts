@@ -66,7 +66,7 @@ export class LoginController {
 
       const token = this.service.JWTGenerate({
         name: user.name,
-        id: user.appid,
+        id: user.sub,
         email: user.email,
       });
 

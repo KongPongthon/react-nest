@@ -1,3 +1,4 @@
+import { Room } from '@/page/poker'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_protect/poker/')({
@@ -5,5 +6,5 @@ export const Route = createFileRoute('/_protect/poker/')({
 })
 
 function RouteComponent() {
-  return <div>Hello "/_protect/poker/"!</div>
+  return <Room />
 }

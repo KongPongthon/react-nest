@@ -3,16 +3,17 @@ import { RoomPokerDetail } from './room-poker-detail'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useRoomPoker } from './hook'
 import { useEffect } from 'react'
+import { CardVoice } from './card-voice'
 
 export function RoomPoker() {
-  const { id } = useParams({ from: '/_protect/room/$id/' })
+  const { id } = useParams({ from: '/_protect/poker/$id/' })
   const { setId, handleCloseRoom } = useRoomPoker()
 
   useEffect(() => {
     setId(id)
   }, [id])
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <div className="flex justify-end max-h-10">
         <button
           data-testid="close-room"
@@ -22,7 +23,13 @@ export function RoomPoker() {
           กลับหน้าแรก
         </button>
       </div>
-      <RoomPokerDetail />
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-1">
+        <RoomPokerDetail />
+      </div>
+
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+        <CardVoice />
+      </div>
     </div>
   )
 }

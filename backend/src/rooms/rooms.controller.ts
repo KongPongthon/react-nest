@@ -87,25 +87,26 @@ export class RoomsController {
       return { error: 'An error occurred' };
     }
   }
+
   @UseGuards(AuthGuard)
   @Post('/join')
   joinRoom(@Body() body: { id: string; idConnect: string }) {
     try {
       const { id, idConnect } = body;
       console.log(id, idConnect);
-      const check = this.RoomGateway.checkUserInRoom(idConnect);
-      console.log(check);
+      // const check = this.RoomGateway.checkUserInRoom(idConnect);
+      // console.log(check);
 
-      if (!check) {
-        throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
-      }
+      // if (!check) {
+      //   throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
+      // }
       const data = this.RoomsService.joinedRoom(parseInt(id));
       console.log('data', data);
       if (!data) {
         throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
       }
       if (typeof data === 'number') {
-        this.RoomGateway.handleJoinRoom(idConnect, data.toString());
+        this.RoomGateway.handleJoinRoom(id, data.toString());
       }
       return data;
     } catch (error) {
@@ -133,8 +134,15 @@ export class RoomsController {
       });
       return newData;
     } catch (error) {
-      console.error(error);
-      return { error: 'An error occurred' };
+      this.logger.error(error);
+      if (error instanceof HttpException) {
+        throw error;
+      } else {
+        throw new HttpException(
+          'An error occurred',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
     }
   }
 

@@ -4,8 +4,9 @@
     "**/*.tsx",
     "eslint.config.js",
     "prettier.config.js",
-    "vite.config.js"
-, "src/page/room/ui/room-home/hook.test.ts"  ],
+    "vite.config.js",
+    "src/page/poker/ui/hook.test.ts"
+  ],
 
   "compilerOptions": {
     "target": "ES2022",

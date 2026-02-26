@@ -15,7 +15,6 @@ import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-qu
 import { Route as DemoTanchatRouteImport } from './routes/demo/tanchat'
 import { Route as DemoStoreRouteImport } from './routes/demo/store'
 import { Route as ExampleGuitarsIndexRouteImport } from './routes/example.guitars/index'
-import { Route as ProtectRoomIndexRouteImport } from './routes/_protect/room/index'
 import { Route as ProtectPokerIndexRouteImport } from './routes/_protect/poker/index'
 import { Route as AuthAuthorizedIndexRouteImport } from './routes/_auth/authorized/index'
 import { Route as ExampleGuitarsGuitarIdRouteImport } from './routes/example.guitars/$guitarId'
@@ -27,7 +26,7 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiTanchatRouteImport } from './routes/demo/api.tanchat'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
-import { Route as ProtectRoomIdIndexRouteImport } from './routes/_protect/room/$id/index'
+import { Route as ProtectPokerIdIndexRouteImport } from './routes/_protect/poker/$id/index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
@@ -60,11 +59,6 @@ const ExampleGuitarsIndexRoute = ExampleGuitarsIndexRouteImport.update({
   id: '/example/guitars/',
   path: '/example/guitars/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ProtectRoomIndexRoute = ProtectRoomIndexRouteImport.update({
-  id: '/room/',
-  path: '/room/',
-  getParentRoute: () => ProtectRouteRoute,
 } as any)
 const ProtectPokerIndexRoute = ProtectPokerIndexRouteImport.update({
   id: '/poker/',
@@ -121,9 +115,9 @@ const DemoStartSsrIndexRoute = DemoStartSsrIndexRouteImport.update({
   path: '/demo/start/ssr/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProtectRoomIdIndexRoute = ProtectRoomIdIndexRouteImport.update({
-  id: '/room/$id/',
-  path: '/room/$id/',
+const ProtectPokerIdIndexRoute = ProtectPokerIdIndexRouteImport.update({
+  id: '/poker/$id/',
+  path: '/poker/$id/',
   getParentRoute: () => ProtectRouteRoute,
 } as any)
 const DemoStartSsrSpaModeRoute = DemoStartSsrSpaModeRouteImport.update({
@@ -157,12 +151,11 @@ export interface FileRoutesByFullPath {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/authorized/': typeof AuthAuthorizedIndexRoute
   '/poker/': typeof ProtectPokerIndexRoute
-  '/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/room/$id/': typeof ProtectRoomIdIndexRoute
+  '/poker/$id/': typeof ProtectPokerIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
@@ -180,12 +173,11 @@ export interface FileRoutesByTo {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/authorized': typeof AuthAuthorizedIndexRoute
   '/poker': typeof ProtectPokerIndexRoute
-  '/room': typeof ProtectRoomIndexRoute
   '/example/guitars': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/room/$id': typeof ProtectRoomIdIndexRoute
+  '/poker/$id': typeof ProtectPokerIdIndexRoute
   '/demo/start/ssr': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesById {
@@ -205,12 +197,11 @@ export interface FileRoutesById {
   '/example/guitars/$guitarId': typeof ExampleGuitarsGuitarIdRoute
   '/_auth/authorized/': typeof AuthAuthorizedIndexRoute
   '/_protect/poker/': typeof ProtectPokerIndexRoute
-  '/_protect/room/': typeof ProtectRoomIndexRoute
   '/example/guitars/': typeof ExampleGuitarsIndexRoute
   '/demo/start/ssr/data-only': typeof DemoStartSsrDataOnlyRoute
   '/demo/start/ssr/full-ssr': typeof DemoStartSsrFullSsrRoute
   '/demo/start/ssr/spa-mode': typeof DemoStartSsrSpaModeRoute
-  '/_protect/room/$id/': typeof ProtectRoomIdIndexRoute
+  '/_protect/poker/$id/': typeof ProtectPokerIdIndexRoute
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRouteTypes {
@@ -230,12 +221,11 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/authorized/'
     | '/poker/'
-    | '/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/room/$id/'
+    | '/poker/$id/'
     | '/demo/start/ssr/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -253,12 +243,11 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/authorized'
     | '/poker'
-    | '/room'
     | '/example/guitars'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/room/$id'
+    | '/poker/$id'
     | '/demo/start/ssr'
   id:
     | '__root__'
@@ -277,12 +266,11 @@ export interface FileRouteTypes {
     | '/example/guitars/$guitarId'
     | '/_auth/authorized/'
     | '/_protect/poker/'
-    | '/_protect/room/'
     | '/example/guitars/'
     | '/demo/start/ssr/data-only'
     | '/demo/start/ssr/full-ssr'
     | '/demo/start/ssr/spa-mode'
-    | '/_protect/room/$id/'
+    | '/_protect/poker/$id/'
     | '/demo/start/ssr/'
   fileRoutesById: FileRoutesById
 }
@@ -351,13 +339,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/example/guitars/'
       preLoaderRoute: typeof ExampleGuitarsIndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_protect/room/': {
-      id: '/_protect/room/'
-      path: '/room'
-      fullPath: '/room/'
-      preLoaderRoute: typeof ProtectRoomIndexRouteImport
-      parentRoute: typeof ProtectRouteRoute
     }
     '/_protect/poker/': {
       id: '/_protect/poker/'
@@ -436,11 +417,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStartSsrIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_protect/room/$id/': {
-      id: '/_protect/room/$id/'
-      path: '/room/$id'
-      fullPath: '/room/$id/'
-      preLoaderRoute: typeof ProtectRoomIdIndexRouteImport
+    '/_protect/poker/$id/': {
+      id: '/_protect/poker/$id/'
+      path: '/poker/$id'
+      fullPath: '/poker/$id/'
+      preLoaderRoute: typeof ProtectPokerIdIndexRouteImport
       parentRoute: typeof ProtectRouteRoute
     }
     '/demo/start/ssr/spa-mode': {
@@ -469,14 +450,12 @@ declare module '@tanstack/react-router' {
 
 interface ProtectRouteRouteChildren {
   ProtectPokerIndexRoute: typeof ProtectPokerIndexRoute
-  ProtectRoomIndexRoute: typeof ProtectRoomIndexRoute
-  ProtectRoomIdIndexRoute: typeof ProtectRoomIdIndexRoute
+  ProtectPokerIdIndexRoute: typeof ProtectPokerIdIndexRoute
 }
 
 const ProtectRouteRouteChildren: ProtectRouteRouteChildren = {
   ProtectPokerIndexRoute: ProtectPokerIndexRoute,
-  ProtectRoomIndexRoute: ProtectRoomIndexRoute,
-  ProtectRoomIdIndexRoute: ProtectRoomIdIndexRoute,
+  ProtectPokerIdIndexRoute: ProtectPokerIdIndexRoute,
 }
 
 const ProtectRouteRouteWithChildren = ProtectRouteRoute._addFileChildren(

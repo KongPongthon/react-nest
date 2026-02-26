@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
 import { Rooms, UserConnectSocket } from './rooms.interface';
 import * as jwt from 'jsonwebtoken';
@@ -67,7 +67,7 @@ export class RoomsService {
     return code;
   }
 
-  verify(token: string): UserConnectSocket {
+  verify(token: string): UserConnectSocket | null {
     try {
       const secret = process.env.JWT_SECRET;
       if (!secret) {
@@ -75,16 +75,9 @@ export class RoomsService {
       }
       const payload = jwt.verify(token, secret) as UserConnectSocket;
       return payload;
-    } catch (error) {
-      if (error instanceof jwt.TokenExpiredError) {
-        throw new Error('Token หมดอายุแล้ว');
-      }
-      if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error('Token ไม่ถูกต้อง (Invalid Signature)');
-      }
-
-      console.error('JWT Verification Error:', error);
-      throw new Error('ไม่สามารถยืนยันตัวตนได้');
+    } catch (errors) {
+      console.error('JWT Verification failed:', errors);
+      return null;
     }
   }
 }

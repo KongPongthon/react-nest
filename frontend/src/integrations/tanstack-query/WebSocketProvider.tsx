@@ -75,6 +75,12 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log('❌ WebSocket closed', event.code, event.reason)
       setIsConnected(false)
 
+      if (event.reason === 'Replaced by new socket') {
+        console.log('🔄 Socket replaced by new tab, stopping reconnect')
+        router.navigate({ to: '/poker' })
+        return
+      }
+
       if (reconnectAttemptsRef.current < maxReconnectAttempts) {
         reconnectAttemptsRef.current++
         const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000)
@@ -86,7 +92,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     ws.onerror = (err) => {
-      RefreshToken()
       setIsConnected(false)
       console.error('🔴 WebSocket error', err)
     }
@@ -119,7 +124,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem('refresh_token', data_token.refresh_token)
       authLogin
         .mutateAsync(data_token.access_token)
-        .then(() => router.navigate({ to: '/room', replace: true }))
+        .then(() => router.navigate({ to: '/poker', replace: true }))
         .catch(() => router.navigate({ to: `/`, replace: true }))
     } catch (error) {
       console.error(error)

@@ -30,7 +30,7 @@ function RouteComponent() {
           localStorage.setItem('refresh_token', data.refresh_token)
           authLogin
             .mutateAsync(data.access_token)
-            .then(() => router.navigate({ to: '/room', replace: true }))
+            .then(() => router.navigate({ to: '/poker', replace: true }))
             .catch(() => router.navigate({ to: `/`, replace: true }))
         },
         onError: () => router.navigate({ to: `/`, replace: true }),

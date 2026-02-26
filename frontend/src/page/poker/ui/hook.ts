@@ -1,4 +1,5 @@
 import { useJoinRoom, usePostRoom } from '@/api/room/hook/mutation'
+import { Alert } from '@/components/ui/alert'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -10,7 +11,7 @@ export const useRoom = () => {
   const [roomCode, setRoomCode] = useState('')
   const router = useRouter()
 
-  const { idConnect } = useWebSocket()
+  const { idConnect, isConnected } = useWebSocket()
   const joingRoom = useJoinRoom()
 
   const handleTab = (value: string) => {
@@ -21,17 +22,20 @@ export const useRoom = () => {
   }
 
   const handleCreateRoom = () => {
+    if (!isConnected) return console.log('please refresh page')
     createRoom.mutateAsync()
   }
 
   const handleJoinRoom = (roomCode: string) => {
     try {
       const id = parseInt(roomCode)
+      if (!isConnected) return console.log('please refresh page')
+
       joingRoom.mutateAsync(
         { id, idConnect },
         {
           onSuccess: (newRoomId) => {
-            router.navigate({ to: `/room/${newRoomId}/` })
+            router.navigate({ to: `/poker/${newRoomId}/` })
           },
           onError: (error) => {
             console.log('Error:', error)
@@ -44,11 +48,12 @@ export const useRoom = () => {
   }
 
   const handleSelectRoom = (id: number) => {
+    if (!isConnected) return console.log('please refresh page')
     joingRoom.mutateAsync(
       { id, idConnect },
       {
         onSuccess: (newRoomId) => {
-          router.navigate({ to: `/room/${newRoomId}/` })
+          router.navigate({ to: `/poker/${newRoomId}/` })
         },
         onError: (error) => {
           console.log('Error:', error)
@@ -58,6 +63,7 @@ export const useRoom = () => {
   }
 
   const handleSubmit = (e: React.FormEvent) => {
+    if (!isConnected) return console.log('please refresh page')
     e.preventDefault()
     if (mode === 'create') {
       handleCreateRoom()
