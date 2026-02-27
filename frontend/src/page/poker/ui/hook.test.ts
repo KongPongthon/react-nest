@@ -8,58 +8,79 @@ import {
   renderHook,
   act,
 } from '@testing-library/react'
-import { useRoom } from './hook'
+import { isConnectSocket, useRoom } from './hook'
+
+const mockSend = vi.fn()
+const mockReconnect = vi.fn()
 const mockUnsubscribe = vi.fn()
 const mockOn = vi.fn(() => mockUnsubscribe)
-// ✅ mock path ต้องตรงกับที่ Room import
-vi.mock('@/hooks/useWebSocket', () => ({
-  useWebSocket: () => ({
-    on: mockOn, // 👈 return unsubscribe function
+const { mockWebSocket } = vi.hoisted(() => {
+  const mockWebSocket = {
+    on: vi.fn(() => vi.fn()),
+    send: vi.fn(),
+    reconnect: vi.fn(),
     idConnect: 'mock-id',
-  }),
+    isConnected: true,
+  }
+  return { mockWebSocket }
+})
+// Hook Mock
+
+// ✅ mock path ต้องตรงกับที่ Room import
+// vi.mock('@/hooks/useWebSocket', () => ({
+//   useWebSocket: () => ({
+//     on: mockOn, // 👈 return unsubscribe function
+//     idConnect: 'mock-id',
+//     isConnected: true,
+//   }),
+// }))
+
+vi.mock('@/hooks/useWebSocket', () => ({
+  useWebSocket: () => mockWebSocket,
 }))
 
+// API Mock
 const mockMutateAsync = vi.fn()
 
 vi.mock('@/api/room/hook/mutation', () => ({
   usePostRoom: () => ({
-    mutateAsync: mockMutateAsync, // 👈 นี่ไง! ตอนนี้มันจะรู้จักแล้ว
+    mutateAsync: mockMutateAsync,
   }),
   useJoinRoom: () => ({
     mutateAsync: mockMutateAsync,
   }),
 }))
 
+// Router Mock
 const mockNavigate = vi.fn()
 
 vi.mock('@tanstack/react-router', () => ({
   useRouter: () => ({ navigate: mockNavigate }),
 }))
 
-vi.mock('@/hooks/useWebSocket', () => ({
-  useWebSocket: () => ({ idConnect: 'mock-id' }),
-}))
 describe('Hook Rooms', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockWebSocket.isConnected = true
+    mockWebSocket.idConnect = 'mock-id'
   })
 
-  it('handleSubmit: ควรเรียก handleCreateRoom เมื่อ mode คือ create', () => {
+  it('create => handleSubmit', async () => {
     const { result } = renderHook(() => useRoom())
     act(() => {
       result.current.handleMode('create')
     })
 
     const mockEvent = { preventDefault: vi.fn() } as any
-    act(() => {
+    await act(async () => {
       result.current.handleSubmit(mockEvent)
     })
 
-    // expect(mockMutateAsync).toHaveBeenCalled()
-    // expect(mockEvent.preventDefault).toHaveBeenCalled()
+    expect(mockMutateAsync).toHaveBeenCalled()
+    expect(mockEvent.preventDefault).toHaveBeenCalled()
   })
 
-  it('handleSubmit: ควรเรียก handleJoinRoom เมื่อ mode คือ join', () => {
+  it('join => handleSubmit', async () => {
     const { result } = renderHook(() => useRoom())
 
     act(() => {
@@ -68,12 +89,59 @@ describe('Hook Rooms', () => {
     })
 
     const mockEvent = { preventDefault: vi.fn() } as any
-    act(() => {
+    await act(async () => {
       result.current.handleSubmit(mockEvent)
     })
 
     // ตรวจสอบว่าถูกเรียกผ่านกิ่ง else ของ handleSubmit
-    // expect(mockMutateAsync).toHaveBeenCalled()
+    expect(mockMutateAsync).toHaveBeenCalled()
+  })
+
+  it('handleSumbit — ไม่เรียก mutateAsync เมื่อ isConnected เป็น false', async () => {
+    mockWebSocket.isConnected = false // หรือ mockUseWebSocket.mockReturnValue(...)
+    mockWebSocket.idConnect = ''
+
+    const { result } = renderHook(async () => useRoom())
+    await act(async () => {
+      ;(await result.current).handleSubmit({ preventDefault: vi.fn() } as any)
+    })
+
+    expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('create — ไม่เรียก mutateAsync เมื่อ isConnected เป็น false', () => {
+    mockWebSocket.isConnected = false // หรือ mockUseWebSocket.mockReturnValue(...)
+    mockWebSocket.idConnect = ''
+
+    const { result } = renderHook(() => useRoom())
+    act(() => {
+      result.current.handleCreateRoom()
+    })
+
+    expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('join — ไม่เรียก mutateAsync เมื่อ isConnected เป็น false', () => {
+    mockWebSocket.isConnected = false // หรือ mockUseWebSocket.mockReturnValue(...)
+    mockWebSocket.idConnect = ''
+
+    const { result } = renderHook(() => useRoom())
+    act(() => {
+      result.current.handleJoinRoom('123')
+    })
+
+    expect(mockMutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('return false และพ่น log เมื่อ status เป็น false', () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    expect(isConnectSocket(false)).toBe(false)
+    expect(consoleSpy).toHaveBeenCalledWith('please refresh page')
+    consoleSpy.mockRestore()
+  })
+
+  it('return true เมื่อ status เป็น true', () => {
+    expect(isConnectSocket(true)).toBe(true)
   })
 
   it('check setRoomCode', () => {
@@ -81,6 +149,7 @@ describe('Hook Rooms', () => {
     act(() => {
       result.current.setRoomCode('abc')
     })
+
     expect(result.current.roomCode).toBe('abc')
   })
 
@@ -89,7 +158,7 @@ describe('Hook Rooms', () => {
     act(() => {
       result.current.handleCreateRoom()
     })
-    // expect(mockMutateAsync).toHaveBeenCalled()
+    expect(mockMutateAsync).toHaveBeenCalled()
   })
 
   it('ควรเรียก mutateAsync เมื่อสั่ง handleJoin Success', () => {
@@ -97,7 +166,7 @@ describe('Hook Rooms', () => {
     act(() => {
       result.current.handleJoinRoom('abc')
     })
-    // expect(mockMutateAsync).toBeCalled()
+    expect(mockMutateAsync).toBeCalled()
   })
 
   it('ควรเรียก mutateAsync เมื่อสั่ง handleJoin Errors', () => {
@@ -111,7 +180,7 @@ describe('Hook Rooms', () => {
     act(() => {
       result.current.handleJoinRoom('abc')
     })
-    // expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error))
+    expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error))
     consoleSpy.mockRestore()
   })
 
@@ -120,7 +189,7 @@ describe('Hook Rooms', () => {
     act(() => {
       result.current.handleMode('create')
     })
-    // expect(result.current.mode).toBe('create')
+    expect(result.current.mode).toBe('create')
   })
 
   it('handleJoinRoom Success', async () => {
@@ -135,7 +204,7 @@ describe('Hook Rooms', () => {
     await act(async () => {
       result.current.handleJoinRoom('abc')
     })
-    // expect(mockNavigate).toHaveBeenCalledWith({ to: '/poker/abc/' })
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/poker/abc/' })
   })
 
   it('handleJoinRoom Errors', async () => {
@@ -151,7 +220,7 @@ describe('Hook Rooms', () => {
     await act(async () => {
       result.current.handleJoinRoom('room not found')
     })
-    // expect(consoleSpy).toHaveBeenCalledWith('Error:', mockErrorMessage)
+    expect(consoleSpy).toHaveBeenCalledWith('Error:', mockErrorMessage)
 
     consoleSpy.mockRestore()
   })
@@ -168,7 +237,7 @@ describe('Hook Rooms', () => {
     await act(async () => {
       result.current.handleSelectRoom(1111)
     })
-    // expect(mockNavigate).toHaveBeenCalledWith({ to: '/room/abc/' })
+    expect(mockNavigate).toHaveBeenCalledWith({ to: '/poker/abc/' })
   })
 
   it('handleSelectRoom Errors', async () => {
@@ -184,7 +253,7 @@ describe('Hook Rooms', () => {
     await act(async () => {
       result.current.handleSelectRoom(1111)
     })
-    // expect(consoleSpy).toHaveBeenCalledWith('Error:', mockErrorMessage)
+    expect(consoleSpy).toHaveBeenCalledWith('Error:', mockErrorMessage)
 
     consoleSpy.mockRestore()
   })

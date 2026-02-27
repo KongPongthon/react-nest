@@ -1,24 +1,14 @@
 import { cn } from '@/lib/utils'
 import { RoomForm } from './room-form'
-import { CustomTable, TableColumn } from '@/components/Custom/Table'
 import { RoomList } from '@/api/room/types'
 import { useRoom } from '../hook'
+import BaseTable from '@/components/base-table'
 interface RoomTableProps {
   rooms: RoomList[]
 }
 
 const RoomTable = ({ rooms }: RoomTableProps) => {
-  const {
-    activeTab,
-    roomCode,
-    mode,
-    setRoomCode,
-    handleTab,
-    handleMode,
-    handleCreateRoom,
-    handleJoinRoom,
-    handleSelectRoom,
-  } = useRoom()
+  const { activeTab, handleTab, handleSelectRoom } = useRoom()
 
   return (
     <div className="w-full h-full space-y-4">
@@ -63,26 +53,50 @@ const RoomTable = ({ rooms }: RoomTableProps) => {
           />
         )}
         {activeTab === 'rooms' && (
-          <CustomTable
-            data-testid={`room-${rooms?.length}`}
-            data={rooms}
-            columns={
-              [
-                {
-                  key: 'roomCode',
-                  name: 'ชื่อห้อง',
-                },
-              ] as TableColumn<{ roomCode: string }>[]
-            }
-            page={0}
-            rowsPerPage={10}
-            totalItems={rooms?.length || 0}
-            handleOnChange={(data) => {
-              console.log('ID', data)
+          <div className="space-y-10">
+            {/* <CustomTable
+              data-testid={`room-${rooms?.length}`}
+              data={rooms}
+              columns={
+                [
+                  {
+                    key: 'roomCode',
+                    name: 'ชื่อห้อง',
+                  },
+                ] as TableColumn<{ roomCode: string }>[]
+              }
+              page={0}
+              rowsPerPage={10}
+              totalItems={rooms?.length || 0}
+              handleOnChange={(data) => {
+                console.log('ID', data)
 
-              handleSelectRoom(data.id)
-            }}
-          />
+                handleSelectRoom(data.id)
+              }}
+            /> */}
+            <BaseTable<RoomList>
+              columns={[
+                {
+                  accessorKey: 'id',
+                  header: 'ลำดับ',
+                  cell: (value) => {
+                    return value.row.index + 1
+                  },
+                },
+                {
+                  accessorKey: 'roomCode',
+                  header: 'ชื่อห้อง',
+                },
+              ]}
+              data={rooms}
+              limitOptions={[10, 20, 30]}
+              totalCount={rooms.length}
+              totalPage={Math.ceil(rooms.length / 10)}
+              onRowClick={(row) => {
+                handleSelectRoom(row.id)
+              }}
+            />
+          </div>
         )}
       </div>
     </div>

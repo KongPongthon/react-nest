@@ -6,7 +6,7 @@ export function CardVoice() {
         <div
           onClick={() => console.log(item)}
           key={item}
-          className="border h-48 w-24 flex justify-center items-center text-2xl text-white bg-amber-400"
+          className="border h-36 w-24 flex justify-center items-center text-2xl text-white bg-amber-400"
         >
           {item}
         </div>

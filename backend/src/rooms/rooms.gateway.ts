@@ -186,7 +186,9 @@ export class RoomsGateway {
       return;
     }
     console.log(`✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.size} คน`);
-    // const payload = JSON.stringify(message);
+    const payload = JSON.stringify(message);
+    console.log(payload);
+
     // members.forEach((member) => {
     //   if (member.readyState === WebSocket.OPEN) {
     //     member.send(payload);

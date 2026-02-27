@@ -44,39 +44,41 @@ export function CustomTable<T>({
   }
 
   return (
-    <div>
-      <Table className="border w-full overflow-x-auto rounded-lg">
-        <TableHeader>
-          <TableRow>
-            <TableHead>ลำดับ</TableHead>
-            {columns.map((col, idx) => (
-              <TableHead key={idx}>{col.name}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.map((item, index) => (
-            <TableRow
-              key={index}
-              onClick={() => handleChangeColumn(item)}
-              className={cn('hover:cursor-pointer')}
-            >
-              <TableCell className="font-medium p-4">
-                {page * rowsPerPage + index + 1}
-              </TableCell>
+    <div className="h-full w-full space-y-3">
+      <div className="border rounded-lg">
+        <Table className=" w-full overflow-x-auto ">
+          <TableHeader>
+            <TableRow>
+              <TableHead>ลำดับ</TableHead>
               {columns.map((col, idx) => (
-                <TableCell key={`${idx}`}>
-                  {render
-                    ? render(item)
-                    : (renderValue(item, col) as React.ReactNode)}
-                </TableCell>
+                <TableHead key={idx}>{col.name}</TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {data.map((item, index) => (
+              <TableRow
+                key={index}
+                onClick={() => handleChangeColumn(item)}
+                className={cn('hover:cursor-pointer')}
+              >
+                <TableCell className="font-medium p-4">
+                  {page * rowsPerPage + index + 1}
+                </TableCell>
+                {columns.map((col, idx) => (
+                  <TableCell key={`${idx}`}>
+                    {render
+                      ? render(item)
+                      : (renderValue(item, col) as React.ReactNode)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       {data.length > 0 && (
-        <div className="flex items-center justify-between border-l border-r border-b p-4">
+        <div className="flex items-center justify-end">
           <div className="text-sm text-muted-foreground">
             {totalItems} รายการ
           </div>

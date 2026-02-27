@@ -1,6 +1,5 @@
-import { useParams, useRouter } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { RoomPokerDetail } from './room-poker-detail'
-import { useWebSocket } from '@/hooks/useWebSocket'
 import { useRoomPoker } from './hook'
 import { useEffect } from 'react'
 import { CardVoice } from './card-voice'
@@ -23,11 +22,11 @@ export function RoomPoker() {
           กลับหน้าแรก
         </button>
       </div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-1">
+      <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-1">
         <RoomPokerDetail />
       </div>
 
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <CardVoice />
       </div>
     </div>

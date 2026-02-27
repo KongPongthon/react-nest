@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
 import { Rooms, UserConnectSocket } from './rooms.interface';
 import * as jwt from 'jsonwebtoken';

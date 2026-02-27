@@ -1,9 +1,9 @@
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
 import { useRoom } from '../hook'
+import { Button } from '@/components/button'
 interface RoomFormProps {
   name: string
 }
@@ -15,34 +15,30 @@ export function RoomForm({ name }: RoomFormProps) {
         <div className="w-full max-w-md mx-auto space-y-6 animate-slide-up">
           {/* Mode Tabs */}
           <div className="flex rounded-xl bg-card border border-border p-1">
-            <button
+            <Button
+              variant={mode === 'create' ? 'default' : 'ghost'}
               type="button"
               data-testid="create-room-button"
               onClick={() => setMode('create')}
               className={cn(
                 `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20`,
-                mode === 'create'
-                  ? 'bg-primary text-primary-foreground border border-primary'
-                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               <Plus className="w-4 h-4 inline mr-2" />
               สร้างห้อง
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={mode === 'join' ? 'default' : 'ghost'}
               type="button"
               data-testid="join-room-button"
               onClick={() => setMode('join')}
               className={cn(
                 `flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-20 `,
-                mode === 'join'
-                  ? 'bg-primary text-primary-foreground border border-primary'
-                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               <Users className="w-4 h-4 inline mr-2" />
               เข้าห้อง
-            </button>
+            </Button>
           </div>
 
           {/* Form */}

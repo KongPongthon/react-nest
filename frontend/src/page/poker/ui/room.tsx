@@ -3,6 +3,7 @@ import { useWebSocket } from '@/hooks/useWebSocket'
 import { useGetRooms } from '@/api/room/hook/quries'
 import { RoomList } from '@/api/room/types'
 import RoomTable from './component/room-table'
+import BaseAlert from '@/components/base-alert'
 
 export function Room() {
   const [rooms, setRooms] = useState<RoomList[]>([])

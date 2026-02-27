@@ -1,5 +1,4 @@
 import { useJoinRoom, usePostRoom } from '@/api/room/hook/mutation'
-import { Alert } from '@/components/ui/alert'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -22,14 +21,14 @@ export const useRoom = () => {
   }
 
   const handleCreateRoom = () => {
-    if (!isConnected) return console.log('please refresh page')
+    if (!isConnectSocket(isConnected)) return
     createRoom.mutateAsync()
   }
 
   const handleJoinRoom = (roomCode: string) => {
     try {
       const id = parseInt(roomCode)
-      if (!isConnected) return console.log('please refresh page')
+      if (!isConnectSocket(isConnected)) return
 
       joingRoom.mutateAsync(
         { id, idConnect },
@@ -48,7 +47,7 @@ export const useRoom = () => {
   }
 
   const handleSelectRoom = (id: number) => {
-    if (!isConnected) return console.log('please refresh page')
+    if (!isConnectSocket(isConnected)) return
     joingRoom.mutateAsync(
       { id, idConnect },
       {
@@ -63,7 +62,7 @@ export const useRoom = () => {
   }
 
   const handleSubmit = (e: React.FormEvent) => {
-    if (!isConnected) return console.log('please refresh page')
+    if (!isConnectSocket(isConnected)) return
     e.preventDefault()
     if (mode === 'create') {
       handleCreateRoom()
@@ -90,4 +89,12 @@ export const useRoom = () => {
     handleSelectRoom,
     handleSubmit,
   }
+}
+
+export const isConnectSocket = (status: boolean): boolean => {
+  if (!status) {
+    console.log('please refresh page')
+    return false
+  }
+  return true
 }
