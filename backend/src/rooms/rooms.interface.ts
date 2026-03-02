@@ -1,7 +1,6 @@
 export interface Rooms {
   id: number;
   roomCode: string;
-  isClosed: boolean;
   createdAt?: string;
   updatedAt?: string;
   createdBy?: string;

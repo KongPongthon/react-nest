@@ -18,7 +18,11 @@ export const apiOauth = async ({
         refresh_token: refresh_token,
         grant_type: 'refresh_token',
       },
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      {
+        enableBearer: false,
+        withCredentials: false,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      },
     )
     return res.data
   } catch (error) {
@@ -42,7 +46,11 @@ export const apiAuthorized = async ({
         redirect_uri: redirectUrl,
         code_verifier: codeVerifier,
       },
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
+      {
+        enableBearer: false,
+        withCredentials: false,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      },
     )
     return res.data
   } catch (error) {
@@ -54,19 +62,29 @@ export const apiAuthorized = async ({
 export const apiLogin = async (data: string) => {
   try {
     console.log('API Verify', data, typeof data)
-
     const res = await client.post(
-      '/login',
+      '/auth',
       {},
       {
         enableBearer: false,
+        withCredentials: true,
         headers: {
           Authorization: `Bearer ${data}`,
-          withCredentials: true,
         },
       },
     )
     localStorage.setItem('access_token', res.data.data)
+    return res.data
+  } catch (error) {
+    console.log(error)
+    throw error
+  }
+}
+
+export const getShortToken = async () => {
+  try {
+    const res = await client.get('/auth')
+    console.log('res.data', res.data)
     return res.data
   } catch (error) {
     console.log(error)

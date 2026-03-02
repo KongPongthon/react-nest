@@ -2,11 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { WsAdapter } from '@nestjs/platform-ws';
 import { ValidationPipe } from '@nestjs/common';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
   app.enableCors({
-    origin: '*',
+    origin: 'http://localhost:5173',
     credentials: true,
   });
   app.useWebSocketAdapter(new WsAdapter(app));
@@ -18,7 +20,7 @@ async function bootstrap() {
   );
 
   const PORT = process.env.PORT || 8070;
-
+  app.use(cookieParser());
   await app.listen(PORT);
 
   console.log(`🚀 Server is running on: http://localhost:${PORT}`);

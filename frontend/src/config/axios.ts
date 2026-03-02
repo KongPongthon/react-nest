@@ -17,6 +17,7 @@ export const client = axios.create({
   paramsSerializer: (params) => qs.stringify(params, { arrayFormat: 'repeat' }),
   enableBearer: true,
   enableRefreshToken: true,
+  withCredentials: true,
 })
 
 client.interceptors.response.use(
@@ -38,12 +39,3 @@ client.interceptors.response.use(
     return Promise.reject(error)
   },
 )
-
-client.interceptors.request.use((config) => {
-  if (config.enableBearer) {
-    const accessToken = localStorage.getItem('access_token')
-    config.headers.Authorization = `Bearer ${accessToken}`
-    config.headers.withCredentials = true
-  }
-  return config
-})

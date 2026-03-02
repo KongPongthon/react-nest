@@ -5,10 +5,10 @@ import { WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
-
 @WebSocketGateway({
   cors: {
     origin: '*',
+    credentials: true,
   },
 })
 export class RoomsGateway {
@@ -24,16 +24,22 @@ export class RoomsGateway {
 
   handleConnection(client: WebSocket, request: IncomingMessage) {
     const url = new URL(request.url ?? '', 'http://localhost');
+
+    this.logger.log('url', request.url);
+
     const token = url.searchParams.get('token');
 
-    if (!token && typeof token !== 'string') {
-      client.close();
+    console.log('token', token);
+
+    if (!token) {
+      client.close(1008, 'Unauthorized');
       return;
     }
 
     const decoded = this.RoomService.verify(token?.toString() ?? '');
 
     if (!decoded || !decoded.id) {
+      this.logger.warn('Token not found');
       this.sendToClient(client, {
         event: 'error',
         data: { message: 'Token not found' },
@@ -48,9 +54,11 @@ export class RoomsGateway {
     const existingSocket = this.RoomStateService.socketByUser.get(userId);
     if (existingSocket && existingSocket !== client) {
       const oldRoomId = this.RoomStateService.userToRoom.get(userId);
-      if (oldRoomId) this.performLeaveRoom(userId, oldRoomId); // ← leave room ก่อน
+      if (oldRoomId) {
+        this.performLeaveRoom(userId, oldRoomId); // ← leave room ก่อน
+        existingSocket.close(1000, 'Replaced by new socket');
+      }
 
-      existingSocket.close(1000, 'Replaced by new socket');
       this.RoomStateService.clients.delete(existingSocket);
     }
 
@@ -68,10 +76,12 @@ export class RoomsGateway {
         event: 'rooms-list',
         data: rooms,
       });
+
       this.sendToClient(client, {
         event: 'connect',
         data: { username: userId },
       });
+
       client.on('message', (data: Buffer) => {
         this.handleMessage(client, data);
       });

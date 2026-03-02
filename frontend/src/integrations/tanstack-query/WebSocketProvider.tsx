@@ -1,5 +1,6 @@
 // src/providers/WebSocketProvider.tsx
 import { useAuthLogin, useAuthRefresh } from '@/api/auth/hook/mutation'
+import { useGetShortToken } from '@/api/auth/hook/quries'
 import { API_URL_SOCKET } from '@/constants'
 import { getScope } from '@/lib/oauth-script'
 import { useRouter } from '@tanstack/react-router'
@@ -24,11 +25,6 @@ interface WebSocketContextType {
   idConnect: string
 }
 
-interface IRefreshToken {
-  refresh_token: string
-  access_token: string
-}
-
 export const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -48,22 +44,23 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const authLogin = useAuthLogin()
   const authRefresh = useAuthRefresh()
   const maxReconnectAttempts = 5
+  const { data, isSuccess } = useGetShortToken()
+  const token = isSuccess && data ? data : null
 
-  const connect = useCallback(() => {
+  const connect = useCallback((accessToken: string) => {
+    console.log('📡 Connecting WebSocket...')
+
     if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
       console.error('❌ Max reconnection attempts reached')
       return
     }
 
-    const token = localStorage.getItem('access_token')
-    if (!token) {
+    if (!accessToken) {
       console.error('❌ Token not found')
-      RefreshToken()
       return
     }
-
-    console.log('📡 Connecting WebSocket...', API_URL_SOCKET)
-    const ws = new WebSocket(`${API_URL_SOCKET}?token=${token}`)
+    console.log('📡 Connecting WebSocket...', API_URL_SOCKET, accessToken)
+    const ws = new WebSocket(`${API_URL_SOCKET}?token=${accessToken}`)
 
     ws.onopen = () => {
       console.log('✅ WebSocket connected', 'WS readyState:', ws.readyState, ws)
@@ -86,7 +83,8 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
         const delay = Math.min(1000 * reconnectAttemptsRef.current, 5000)
 
         reconnectTimeoutRef.current = setTimeout(() => {
-          connect()
+          if (!token) return
+          connect(token)
         }, delay)
       }
     }
@@ -161,17 +159,18 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const reconnect = useCallback(() => {
     reconnectAttemptsRef.current = 0
     wsRef.current?.close()
-    connect()
-  }, [connect])
+    if (!token) return
+    connect(token)
+  }, [token])
 
   useEffect(() => {
-    connect()
-
+    if (!token) return
+    connect(token)
     return () => {
       reconnectTimeoutRef.current && clearTimeout(reconnectTimeoutRef.current)
       wsRef.current?.close()
     }
-  }, [connect])
+  }, [token])
 
   return (
     <WebSocketContext.Provider

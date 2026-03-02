@@ -3,10 +3,10 @@ import { RoomsService } from './rooms.service';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsController } from './rooms.controller';
 import { RoomsGateway } from './rooms.gateway';
-import { LoginModule } from 'src/login/login.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [LoginModule],
+  imports: [AuthModule],
   controllers: [RoomsController],
   providers: [RoomsService, RoomStateService, RoomsGateway],
 })

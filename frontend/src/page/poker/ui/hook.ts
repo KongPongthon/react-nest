@@ -11,6 +11,7 @@ export const useRoom = () => {
   const router = useRouter()
 
   const { idConnect, isConnected } = useWebSocket()
+
   const joingRoom = useJoinRoom()
 
   const handleTab = (value: string) => {
@@ -62,6 +63,9 @@ export const useRoom = () => {
   }
 
   const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('Check Create')
+
     if (!isConnectSocket(isConnected)) return
     e.preventDefault()
     if (mode === 'create') {

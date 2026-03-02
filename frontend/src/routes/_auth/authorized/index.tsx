@@ -41,9 +41,6 @@ function RouteComponent() {
     if (!hash || hasCalled.current) return
     callAuth()
   }, [hash, authAuthorized, params, router])
-  if (!hash) {
-    return <div>Unauthorized</div>
-  }
 
-  return <div>Loading...</div>
+  return null
 }

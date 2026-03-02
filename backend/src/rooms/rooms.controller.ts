@@ -83,8 +83,15 @@ export class RoomsController {
         );
       }
     } catch (error) {
-      console.error(error);
-      return { error: 'An error occurred' };
+      this.logger.error(error);
+      if (error instanceof HttpException) {
+        throw error;
+      } else {
+        throw new HttpException(
+          'An error occurred',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
     }
   }
 

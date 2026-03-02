@@ -17,7 +17,6 @@ export class RoomsService {
       const newRoom: Rooms = {
         id: roomId,
         roomCode: roomCode,
-        isClosed: false,
         createdAt: Date.now().toString(),
         updatedAt: Date.now().toString(),
         createdBy: 'ss',

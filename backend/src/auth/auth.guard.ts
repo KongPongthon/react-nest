@@ -4,12 +4,12 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginService } from './login.service';
 import { Request } from 'express';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private service: LoginService) {}
+  constructor(private service: AuthService) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: Request = context.switchToHttp().getRequest();
     // console.log('request', request.headers);
@@ -27,7 +27,7 @@ export class AuthGuard implements CanActivate {
     console.log('Token', token);
 
     try {
-      const user = await this.service.login(token);
+      const user = await this.service.login({ token: token });
       if (!user)
         throw new UnauthorizedException('Token ไม่ถูกต้อง หรือหมดอายุ');
       request['user'] = user;

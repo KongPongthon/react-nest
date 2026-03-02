@@ -85,14 +85,14 @@ export function RoomPokerDetail() {
     <div className="h-full w-full flex justify-center items-center min-h-150">
       <div className="relative flex items-center justify-center">
         {/* ตัวโต๊ะ (Table Center) */}
-        <div className="absolute w-120 h-50 rounded-lg bg-slate-800 border-8 border-slate-700 shadow-2xl flex items-center justify-center z-10">
-          <div className="text-slate-400 font-bold tracking-widest text-sm">
+        <div className="absolute w-120 h-50 rounded-lg bg-primary-400 shadow-2xl flex items-center justify-center z-10">
+          <div className="text-white font-bold tracking-widest text-sm">
             MEETING ROOM
           </div>
         </div>
 
         {memberSitDown.map((person, index) => {
-          const sitDownCount = 8
+          // const sitDownCount = 8
           // const angle = person.index * (360 / sitDownCount) + 90
           const { x, y } = getSeatPosition(index)
           return (
@@ -113,7 +113,7 @@ export function RoomPokerDetail() {
                     className={cn(
                       `
                   w-20 h-30  border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
-                  group-hover:scale-110 transition-transform cursor-pointer bg-slate-700
+                  group-hover:scale-110 transition-transform cursor-pointer bg-primary-400
                 `,
                     )}
                     onClick={() => handleSitdown(person.index)}
@@ -126,12 +126,12 @@ export function RoomPokerDetail() {
                     className={cn(
                       `
                   w-20 h-30  border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
-                  group-hover:scale-110 transition-transform cursor-pointer bg-slate-700
+                  group-hover:scale-110 transition-transform cursor-pointer bg-primary-400
                 `,
                     )}
                     onClick={() => handleSitdown(person.index)}
                   ></div>
-                  <div className="h-20 w-20 rounded-full bg-amber-300 flex items-center justify-center text-center">
+                  <div className="h-20 w-20 rounded-full bg-accent flex items-center justify-center text-center">
                     {person.userName.charAt(0)}
                     {person.role === 'Host' && (
                       <Crown

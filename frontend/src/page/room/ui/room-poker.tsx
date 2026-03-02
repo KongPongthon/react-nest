@@ -13,6 +13,7 @@ export function RoomPoker() {
   }, [id])
   return (
     <div className="h-full relative">
+      <h2>จำนวนผู้เข้าห้อง 20 คน</h2>
       <div className="flex justify-end max-h-10">
         <button
           data-testid="close-room"
@@ -25,7 +26,6 @@ export function RoomPoker() {
       <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-1">
         <RoomPokerDetail />
       </div>
-
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
         <CardVoice />
       </div>

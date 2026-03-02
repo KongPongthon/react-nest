@@ -1,9 +1,10 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as jose from 'jose';
 import * as jwt from 'jsonwebtoken';
+import { IAuth, IGenerateToken, IJWT } from './auth.interface';
 
 @Injectable()
-export class LoginService {
+export class AuthService {
   private readonly jwks: ReturnType<typeof jose.createRemoteJWKSet>;
   private readonly issuer: string;
   private readonly audience: string;
@@ -19,19 +20,16 @@ export class LoginService {
     this.secret = process.env.JWT_SECRET ?? '';
   }
 
-  async login(accessToken: string) {
-    try {
-      console.log('accessToken', accessToken);
+  async login({ token }: IAuth) {
+    console.log('token', token);
 
-      if (!accessToken)
+    try {
+      if (!token)
         throw new UnauthorizedException('Token ไม่ถูกต้อง หรือหมดอายุ');
-      if (typeof accessToken !== 'string') {
+      if (typeof token !== 'string') {
         throw new Error('Invalid token format: Token must be a string');
       }
-
-      const payload = await this.verifyJose(accessToken);
-      // console.log('Login สำเร็จ', payload);
-
+      const payload = await this.verifyJose({ jwt: token });
       return payload;
     } catch (error) {
       console.error('Login Error:', error);
@@ -40,7 +38,7 @@ export class LoginService {
   }
 
   // ปรับชื่อให้สื่อสารชัดเจน และรับค่าผ่าน parameter
-  private async verifyJose(jwt: string) {
+  private async verifyJose({ jwt }: IJWT) {
     if (!jwt) throw new Error('Token is not defined');
     const { payload } = await jose.jwtVerify(jwt, this.jwks, {
       issuer: this.issuer,
@@ -49,7 +47,7 @@ export class LoginService {
     return payload;
   }
 
-  JWTGenerate(data: { name: string; id: string; email: string }): string {
+  JWTGenerate(data: IGenerateToken): string {
     // console.log('JWT Generate');
 
     // console.log('JWT Generate secret', this.secret);
@@ -57,14 +55,9 @@ export class LoginService {
       throw new Error('JWT_SECRET is not defined in env');
     }
     try {
-      // console.log('JWTGenerate', data);
       const accessToken = jwt.sign(
         { name: data.name, id: data.id, email: data.email },
         this.secret,
-        {
-          expiresIn: '40m',
-          algorithm: 'HS256',
-        },
       );
       return accessToken;
     } catch (err) {
@@ -73,13 +66,36 @@ export class LoginService {
     }
   }
 
-  public verify(token: string): boolean {
+  GenerateShortToken(data: IGenerateToken) {
+    if (!this.secret) {
+      throw new Error('JWT_SECRET is not defined in env');
+    }
     try {
-      jwt.verify(token, this.secret);
-      return true;
-    } catch (error) {
-      console.log(error);
-      return false;
+      const access_token = jwt.sign(
+        { name: data.name, id: data.id, email: data.email },
+        this.secret,
+        {
+          expiresIn: '10s',
+        },
+      );
+      return access_token;
+    } catch (err) {
+      console.error(err);
+      throw new Error('Failed to generate JWT token');
+    }
+  }
+
+  verify(token: string): IGenerateToken | null {
+    try {
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        throw new Error('JWT_SECRET is not defined in env');
+      }
+      const payload = jwt.verify(token, secret) as IGenerateToken;
+      return payload;
+    } catch (errors) {
+      console.error('JWT Verification failed:', errors);
+      return null;
     }
   }
 }
