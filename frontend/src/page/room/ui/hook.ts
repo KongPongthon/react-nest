@@ -1,4 +1,5 @@
 import { useSitdown } from '@/api/room/hook/mutation'
+import { useGetUserInRoom } from '@/api/room/hook/quries'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useRouter } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
@@ -18,17 +19,35 @@ export function useRoomPoker() {
   const radius = 250
   const MAX_SEATS = 10
   const sitdown = useSitdown()
+  const [peopleJoinRoom, setPeopleJoinRoom] = useState<Person[]>([])
+
+  const [scoreCard, setScoreCard] = useState<number>(0)
 
   const { send } = useWebSocket()
   const router = useRouter()
 
+  const { data: peopleInRoom } = useGetUserInRoom({ variables: id, enabled: !!id })
+
+  useEffect(() => {
+    if (peopleInRoom) {
+      setPeopleJoinRoom(peopleInRoom)
+    }
+  }, [peopleInRoom])
+
   useEffect(() => {
     const unsubscribeSitdown = on('update-seats', (roomsList) => {
-      console.log('📋 Received Join Room Sitdown:', roomsList)
+      console.log('📋 Received Sitdown:', roomsList)
       setPeopleSitdown(roomsList.seats)
+    })
+
+    const unsubscribeJoinRoom = on('update-room', (data) => {
+      console.log('📋 Received update Room:', data)
+      setPeopleJoinRoom(data)
+
     })
     return () => {
       unsubscribeSitdown()
+      unsubscribeJoinRoom()
     }
   }, [on])
 
@@ -52,11 +71,12 @@ export function useRoomPoker() {
 
   const handleSitdown = async (index: number) => {
     try {
-      await sitdown.mutateAsync({
+      const data = await sitdown.mutateAsync({
         indexChair: index.toString(),
         idConnect: idConnect,
         roomId: id,
       })
+      console.log(data)
     } catch (error) {
       console.log(error)
     }
@@ -67,11 +87,18 @@ export function useRoomPoker() {
     send('leave_room', id)
   }
 
+  const handleSelectScoreCard = (score: number) => {
+    setScoreCard(score)
+  }
+
   return {
     memberSitDown,
     handleSitdown,
     setId,
     radius,
     handleCloseRoom,
+    peopleJoinRoom,
+    handleSelectScoreCard,
+    scoreCard
   }
 }

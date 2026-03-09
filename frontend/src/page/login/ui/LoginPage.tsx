@@ -1,14 +1,13 @@
 import { Button } from '@/components/button'
 import {
+  clientID,
   codeVerifier,
   generateCodeChallenge,
   generateRandomString,
   getScope,
+  MSAuthUrl,
+  redirectUrl,
 } from '@/lib/oauth-script'
-
-const MSAuthUrl: string = import.meta.env.VITE_MS_AUTH_URL
-const redirectUrl: string = import.meta.env.VITE_REDIRECT_URI
-const clientID: string = import.meta.env.VITE_MS_CLIENT_ID
 
 const LoginPage = () => {
   const handleLogin = async () => {

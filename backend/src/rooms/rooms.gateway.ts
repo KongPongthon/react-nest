@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
 import { WebSocketMessage } from './rooms.interface';
@@ -20,7 +20,7 @@ export class RoomsGateway {
   constructor(
     private readonly RoomStateService: RoomStateService,
     private readonly RoomService: RoomsService,
-  ) {}
+  ) { }
 
   handleConnection(client: WebSocket, request: IncomingMessage) {
     const url = new URL(request.url ?? '', 'http://localhost');
@@ -50,6 +50,7 @@ export class RoomsGateway {
     }
 
     const userId = decoded.id;
+    console.log('userId', userId, typeof userId);
 
     const existingSocket = this.RoomStateService.socketByUser.get(userId);
     if (existingSocket && existingSocket !== client) {
@@ -116,20 +117,59 @@ export class RoomsGateway {
   private performLeaveRoom(clientId: string, roomId: string) {
     // console.log('roomID', roomId);
     // ลบออกจากห้อง
-    if (roomId) {
-      this.RoomStateService.rooms.delete(roomId);
-      this.RoomStateService.roomMembers.delete(roomId);
-      this.RoomStateService.roomSeats?.delete(roomId);
-    }
+    if (!roomId) return;
 
     if (!clientId) return;
-
+    this.RoomStateService.roomSessions.delete(roomId);
     this.RoomStateService.userToRoom.delete(clientId);
   }
 
   // 2. แก้ไข handleJoinRoom ให้เรียกใช้ฟังก์ชันกลาง
-  handleJoinRoom(clientId: string, roomId: string) {
-    console.log(clientId, roomId);
+  handleJoinRoom(clientId: string, roomId: string, email: string) {
+    console.log('roomId', roomId);
+
+    if (!roomId) {
+      throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
+    }
+
+    console.log('clientId, roomId', clientId, roomId);
+
+    this.RoomStateService.userToRoom.set(clientId, roomId);
+    // this.RoomStateService.roomMembers.get(roomId)?.add(clientId);
+    const room = this.RoomStateService.roomSessions.get(roomId);
+    console.log(room?.participants);
+
+    if (!room) {
+      throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
+    }
+    if (!room.participants) {
+      throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
+    }
+    room.participants.set(clientId, {
+      userId: clientId,
+      username: email,
+      socketId: clientId,
+      joinedAt: new Date(),
+    });
+
+    // this.broadcastToRoom(roomId, {
+    //   event: 'join_room',
+    //   data: { username: email },
+    // });
+
+    const getRoom = this.RoomStateService.roomSessions.get(roomId);
+
+    if (!getRoom) return;
+
+    getRoom.participants?.forEach((member) => {
+      console.log("member", member);
+      const userInroom = this.RoomStateService.socketByUser.get(member.userId)
+      if (!userInroom) return console.log("userInroom", userInroom);
+      this.sendToClient(userInroom, {
+        event: 'update-room',
+        data: { username: member.username },
+      });
+    })
   }
 
   private handleMessage(client: WebSocket, data: Buffer) {
@@ -184,26 +224,29 @@ export class RoomsGateway {
     console.log(
       `📢 กำลังจะ Broadcast ไปที่ห้อง: ${roomId} (Type: ${typeof roomId})`,
     );
-    const members = this.RoomStateService.roomMembers.get(roomId);
+    const members = this.RoomStateService.roomSessions.get(roomId);
     if (!members) {
       console.log(
         `⚠️ ไม่พบสมาชิกในห้อง ${roomId} ใน Map (อาจจะลืม .set() หรือ Key ไม่ตรง)`,
       );
       console.log(
         'ปัจจุบันมีห้องในระบบ:',
-        Array.from(this.RoomStateService.roomMembers.keys()),
+        Array.from(this.RoomStateService.roomSessions.keys()),
       );
       return;
     }
-    console.log(`✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.size} คน`);
+    console.log(
+      `✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.participants?.size} คน`,
+    );
     const payload = JSON.stringify(message);
     console.log(payload);
 
-    // members.forEach((member) => {
-    //   if (member.readyState === WebSocket.OPEN) {
-    //     member.send(payload);
-    //   }
-    // });
+    members.participants?.forEach((member) => {
+      console.log("member", member);
+      const userInroom = this.RoomStateService.socketByUser.get(member.userId)
+      if (!userInroom) return console.log("userInroom", userInroom);
+      this.sendToClient(userInroom, message);
+    })
   }
 
   private broadcast(message: WebSocketMessage) {
@@ -215,15 +258,80 @@ export class RoomsGateway {
     });
   }
 
-  sitdownNew(client: string, index: number, email: string, id: string) {
-    const clientSocket = this.findSocketById(client);
+  sitdownNew(index: number, id: string, email: string) {
+    try {
+      console.log(index, id, email);
 
-    console.log(index, email, id);
+      console.log('UserToRoom', this.RoomStateService.userToRoom, id);
 
-    if (!clientSocket) {
-      console.log(`❌ ไม่พบ Socket สำหรับ idConnect: ${clientSocket}`);
-      return;
+      const roomId = this.RoomStateService.userToRoom.get(id);
+
+      if (!roomId) {
+        console.log(`❌ ไม่พบห้องสำหรับ ID: ${id} ${typeof id} roomId`);
+        return;
+      }
+      const sessions = this.RoomStateService.roomSessions.get(roomId);
+
+      if (!sessions) {
+        console.log(`❌ ไม่พบห้องสำหรับ ID: ${roomId} ${typeof roomId} sessions`);
+        return;
+      }
+
+      const seats = sessions.seats;
+
+      if (!seats) {
+        console.log(
+          `❌ ไม่พบห้องสำหรับ ID: ${roomId} ${typeof roomId} sessions.seats`,
+        );
+        return;
+      }
+
+      // ลบที่นั่งเก่าของ user คนนี้ออกก่อน (ถ้ามี)
+      let oldSeatIndex: number | null = null;
+      for (const [seatIndex, seat] of seats.entries()) {
+        const hasUser = seat.some((item) => item.userId === id);
+        if (hasUser) {
+          oldSeatIndex = seatIndex;
+          seats.delete(seatIndex);
+          break;
+        }
+      }
+
+      // ถ้ากดที่เดิม → toggle ออก แล้วหยุดเลย ไม่ต้องนั่งใหม่
+      if (oldSeatIndex !== index) {
+        // นั่งที่ใหม่ (ถ้าที่นั้นว่าง)
+        if (!seats.has(index)) {
+          const role = sessions.hostId === id ? 'host' : 'guest';
+          seats.set(index, [{
+            userId: id,
+            userName: email,
+            index: index,
+            role: role,
+          }]);
+        }
+      }
+
+      const members = this.RoomStateService.roomSessions.get(roomId);
+
+      members?.participants?.forEach((member) => {
+        console.log("member", member);
+        const userInroom = this.RoomStateService.socketByUser.get(member.userId)
+        if (!userInroom) return console.log("userInroom", userInroom);
+        this.sendToClient(userInroom, {
+          event: 'update-seats',
+          data: {
+            seats: members?.seats.get(index) ?? [],
+          },
+        });
+      })
+      return members?.seats.get(index) ?? []
     }
+    catch (error) {
+      console.log("TESTERROR", error);
+
+
+    }
+    // const oldRoomId = this.RoomStateService.
   }
 
   private generateClientId(): string {

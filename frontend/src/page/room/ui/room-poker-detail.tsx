@@ -80,7 +80,7 @@ export const getSeatPosition = (
 }
 
 export function RoomPokerDetail() {
-  const { memberSitDown, handleSitdown, radius } = useRoomPoker()
+  const { memberSitDown, handleSitdown } = useRoomPoker()
   return (
     <div className="h-full w-full flex justify-center items-center min-h-150">
       <div className="relative flex items-center justify-center">
@@ -113,27 +113,27 @@ export function RoomPokerDetail() {
                     className={cn(
                       `
                   w-20 h-30  border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
-                  group-hover:scale-110 transition-transform cursor-pointer bg-primary-400
+                  hover:scale-90 transition-transform cursor-pointer bg-primary-400
                 `,
                     )}
                     onClick={() => handleSitdown(person.index)}
                   ></div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center group">
+                <div className="flex flex-col items-center group space-y-2">
                   <div
                     data-testid={`sitdown-${person.index}`}
                     className={cn(
                       `
-                  w-20 h-30  border-4 flex items-center justify-center text-white font-bold text-xs shadow-lg
-                  group-hover:scale-110 transition-transform cursor-pointer bg-primary-400
+                  w-20 h-30  border-4 flex items-center justify-center font-bold text-xs shadow-lg
+                  hover:scale-90 transition-transform cursor-pointer bg-primary-400
                 `,
                     )}
                     onClick={() => handleSitdown(person.index)}
                   ></div>
-                  <div className="h-20 w-20 rounded-full bg-accent flex items-center justify-center text-center">
+                  <div className="h-20 w-20 rounded-full text-white bg-accent flex items-center justify-center text-center">
                     {person.userName.charAt(0)}
-                    {person.role === 'Host' && (
+                    {person.role === 'host' && (
                       <Crown
                         data-testid="host-icon"
                         className="bottom-1/4 left-1/2 transform -translate-x-1/2 absolute"

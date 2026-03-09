@@ -28,11 +28,10 @@ export const useRoom = () => {
 
   const handleJoinRoom = (roomCode: string) => {
     try {
-      const id = parseInt(roomCode)
       if (!isConnectSocket(isConnected)) return
 
       joingRoom.mutateAsync(
-        { id, idConnect },
+        { roomCode },
         {
           onSuccess: (newRoomId) => {
             router.navigate({ to: `/poker/${newRoomId}/` })
@@ -47,10 +46,10 @@ export const useRoom = () => {
     }
   }
 
-  const handleSelectRoom = (id: number) => {
+  const handleSelectRoom = (roomCode: string) => {
     if (!isConnectSocket(isConnected)) return
     joingRoom.mutateAsync(
-      { id, idConnect },
+      { roomCode },
       {
         onSuccess: (newRoomId) => {
           router.navigate({ to: `/poker/${newRoomId}/` })

@@ -1,4 +1,4 @@
-import { LoginPage } from '@/page/login'
+import LoginPage from '@/components/pages-template/LoginPage'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_auth/')({

@@ -33,6 +33,7 @@ export interface SeatInfo {
   userId: string;
   userName: string;
   index: number;
+  role: string;
 }
 
 export interface UserStage {
@@ -46,4 +47,44 @@ export interface UserConnectSocket {
   email: string;
   iat: number;
   exp: number;
+}
+
+interface UserVote {
+  userId: string;
+  name: string;
+  vote: string;
+  active: boolean;
+}
+
+export interface Participant {
+  userId: string;
+  username: string;
+  socketId: string;
+  joinedAt: Date;
+}
+
+interface CardMeta {
+  cardId: string;
+  title: string;
+  description?: string;
+  createdBy: string;
+  createdAt: Date;
+}
+
+interface RoundSession {
+  cardId: string;
+  votes: Map<string, UserVote>;
+  revealed: boolean;
+  startedAt: Date;
+}
+
+export interface RoomSession {
+  id: number;
+  roomCode: string;
+  hostId: string;
+  participants: Map<string, Participant>;
+  seats: Map<number, SeatInfo[]>;
+  cards?: Map<string, CardMeta>;
+  activeCardId?: string;
+  activeRound?: RoundSession;
 }

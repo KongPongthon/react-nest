@@ -93,7 +93,7 @@ const RoomTable = ({ rooms }: RoomTableProps) => {
               totalCount={rooms.length}
               totalPage={Math.ceil(rooms.length / 10)}
               onRowClick={(row) => {
-                handleSelectRoom(row.id)
+                handleSelectRoom(row.roomCode)
               }}
             />
           </div>

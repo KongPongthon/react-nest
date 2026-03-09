@@ -1,5 +1,5 @@
 import { router } from 'react-query-kit'
-import { apiGetRooms, apiJoinRoom, apiPostRoom, apiPostSitdown } from './apis'
+import { apiGetRooms, apiGetUserInRoom, apiJoinRoom, apiPostRoom, apiPostSitdown } from './apis'
 export const RoomQueries = router('room', {
   postRoom: router.mutation({
     mutationFn: apiPostRoom,
@@ -12,5 +12,8 @@ export const RoomQueries = router('room', {
   }),
   postSitdown: router.mutation({
     mutationFn: apiPostSitdown,
+  }),
+  getUserInRoom: router.query({
+    fetcher: apiGetUserInRoom,
   }),
 })

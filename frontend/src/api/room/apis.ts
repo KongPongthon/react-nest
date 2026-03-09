@@ -41,3 +41,12 @@ export const apiPostSitdown = async (data: ISitdownInRoom) => {
     throw error
   }
 }
+
+export const apiGetUserInRoom = async (id: string) => {
+  try {
+    const res = await client.get(`/rooms/${id}`)
+    return res.data
+  } catch (error) {
+    throw error
+  }
+}

@@ -4,8 +4,7 @@ export interface RoomList {
 }
 
 export interface CreateRoomDto {
-  id: number
-  idConnect: string
+  roomCode: string
 }
 
 export interface ISitdownInRoom {

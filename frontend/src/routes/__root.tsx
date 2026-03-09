@@ -52,7 +52,7 @@ function RootDocument() {
     <html lang="en">
       <body className="flex flex-col h-screen w-full">
         <Header />
-        <div className="md:px-20 md:py-4 h-screen w-full">
+        <div className="h-screen w-full">
           <Outlet />
         </div>
 

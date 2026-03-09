@@ -83,7 +83,7 @@ export function RoomForm({ name }: RoomFormProps) {
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   placeholder="เช่น: ABC123"
                   className="bg-card border-border focus:border-primary font-mono uppercase"
-                  maxLength={6}
+                  maxLength={12}
                   required
                 />
               </div>

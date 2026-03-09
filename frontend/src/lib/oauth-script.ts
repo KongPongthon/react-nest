@@ -1,6 +1,10 @@
 const scopes: string = import.meta.env.VITE_APP_SCOPES
 const MSAppIDUri: string = import.meta.env.VITE_MS_APPID_URI
 
+export const MSAuthUrl: string = import.meta.env.VITE_MS_AUTH_URL
+export const redirectUrl: string = import.meta.env.VITE_REDIRECT_URI
+export const clientID: string = import.meta.env.VITE_MS_CLIENT_ID
+
 const getScope = (): string => {
   const ns = scopes.split(',').map((item) => {
     return `${MSAppIDUri}${item}`

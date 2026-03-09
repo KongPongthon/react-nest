@@ -1,28 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { Body, Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
-import { Rooms, UserConnectSocket } from './rooms.interface';
+import {
+  Participant,
+  RoomSession,
+  SeatInfo,
+  UserConnectSocket,
+} from './rooms.interface';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly RoomStateService: RoomStateService) {}
-  getRoom(): Rooms[] {
-    return Array.from(this.RoomStateService.rooms.values()).flat();
+  constructor(private readonly RoomStateService: RoomStateService) { }
+  getRoom(): RoomSession[] {
+    const rooms = Array.from(
+      this.RoomStateService.roomSessions.values(),
+    ).flat();
+
+    return rooms;
   }
 
-  createdRoom() {
+  createdRoom(id: string) {
     try {
       const roomCode = this.generateRoomCode();
       const roomId = Date.now();
-      const newRoom: Rooms = {
+      const newRoom = {
         id: roomId,
         roomCode: roomCode,
-        createdAt: Date.now().toString(),
-        updatedAt: Date.now().toString(),
-        createdBy: 'ss',
-        updatedBy: 'ss',
+        hostId: id,
+        participants: new Map<string, Participant>(),
+        seats: new Map<number, SeatInfo[]>(),
       };
-      this.RoomStateService.rooms.set(roomCode, newRoom);
+      this.RoomStateService.roomSessions.set(roomId.toString(), newRoom);
+      // this.RoomStateService.roomMembers.set(roomId.toString(), new Set());
 
       return { success: true };
     } catch (error) {
@@ -31,30 +40,36 @@ export class RoomsService {
     }
   }
 
-  getRoomById(id: number) {
+  getRoomById(id: number): Participant[] | { error: string } {
     try {
-      const room = Array.from(this.RoomStateService.rooms.values()).find(
+      const room = Array.from(this.RoomStateService.roomSessions.values()).find(
         (room) => room.id === id,
       );
       if (!room) {
         return { error: 'Room not found' };
       }
-      return room;
+
+      const participants = Array.from(room.participants.values());
+
+      return participants;
     } catch (error) {
       console.log('errors', error);
+      throw error;
     }
   }
 
-  joinedRoom(id: number) {
-    console.log('Service ID', id);
-    const room = Array.from(this.RoomStateService.rooms.values()).find(
-      (room) => room.id === id,
+  joinedRoom(roomCode: string): string {
+    console.log('Service roomCode', roomCode);
+    const room = Array.from(this.RoomStateService.roomSessions.values()).find(
+      (room) => room.roomCode === roomCode,
     );
     if (!room) {
-      return { error: 'Room not found' };
+      return 'Room not found';
     }
+    console.log('Room list', room);
+
     // this.RoomStateService.roomMembers.set(id.toString(), new Set());
-    return room.id;
+    return room.id.toString();
   }
 
   private generateRoomCode(): string {

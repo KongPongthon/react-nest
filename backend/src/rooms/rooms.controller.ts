@@ -7,6 +7,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  Param,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -59,12 +60,19 @@ export class RoomsController {
   constructor(
     private readonly RoomsService: RoomsService,
     private readonly RoomGateway: RoomsGateway,
-  ) {}
+  ) { }
+
   @UseGuards(AuthGuard)
   @Post()
-  addRoom() {
+  addRoom(@CurrentUser() user: JWTPayload) {
     try {
-      const data = this.RoomsService.createdRoom();
+      if (!user) {
+        return {
+          message: 'Token ไม่ถูกต้อง หรือหมดอายุ',
+          statusCode: 401,
+        };
+      }
+      const data = this.RoomsService.createdRoom(user.id);
       console.log('Data', data);
       if (!data.success) {
         return { error: 'An error occurred' };
@@ -97,25 +105,39 @@ export class RoomsController {
 
   @UseGuards(AuthGuard)
   @Post('/join')
-  joinRoom(@Body() body: { id: string; idConnect: string }) {
+  joinRoom(
+    @Body() body: { roomCode: string },
+    @CurrentUser() user: JWTPayload,
+  ) {
     try {
-      const { id, idConnect } = body;
-      console.log(id, idConnect);
-      // const check = this.RoomGateway.checkUserInRoom(idConnect);
-      // console.log(check);
+      console.log('user', user);
 
-      // if (!check) {
-      //   throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
-      // }
-      const data = this.RoomsService.joinedRoom(parseInt(id));
-      console.log('data', data);
-      if (!data) {
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+
+      if (!body) {
+        throw new HttpException(
+          'Room code is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const { roomCode } = body;
+
+      const id = user.id;
+      const email = user.email;
+
+      const roomID = this.RoomsService.joinedRoom(roomCode);
+
+      if (!roomID) {
         throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
       }
-      if (typeof data === 'number') {
-        this.RoomGateway.handleJoinRoom(id, data.toString());
-      }
-      return data;
+
+      console.log('id || Data', id, roomID);
+
+      this.RoomGateway.handleJoinRoom(id, roomID, email);
+      return roomID;
     } catch (error) {
       this.logger.error(error);
       if (error instanceof HttpException) {
@@ -129,6 +151,7 @@ export class RoomsController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Get()
   getRoomsController() {
     try {
@@ -161,12 +184,31 @@ export class RoomsController {
   ) {
     try {
       console.log(body, user);
-      this.RoomGateway.sitdownNew(
-        body.idConnect,
+      const data = this.RoomGateway.sitdownNew(
         parseInt(body.indexChair),
-        user.email,
         user.id,
+        user.email,
       );
+      return data;
+    } catch (error) {
+      this.logger.error(error);
+      if (error instanceof HttpException) {
+        throw error;
+      } else {
+        throw new HttpException(
+          'An error occurred',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/:id')
+  getRoomController(@Param('id') id: string) {
+    try {
+      const data = this.RoomsService.getRoomById(parseInt(id));
+      return data;
     } catch (error) {
       this.logger.error(error);
       if (error instanceof HttpException) {
