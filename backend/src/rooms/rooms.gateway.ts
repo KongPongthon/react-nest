@@ -308,23 +308,23 @@ export class RoomsGateway {
   }
 
   private broadcastToRoom(roomId: string, message: WebSocketMessage) {
-    console.log(
-      `📢 กำลังจะ Broadcast ไปที่ห้อง: ${roomId} (Type: ${typeof roomId})`,
-    );
+    // console.log(
+    //   `📢 กำลังจะ Broadcast ไปที่ห้อง: ${roomId} (Type: ${typeof roomId})`,
+    // );
     const members = this.RoomStateService.roomSessions.get(roomId);
     if (!members) {
-      console.log(
-        `⚠️ ไม่พบสมาชิกในห้อง ${roomId} ใน Map (อาจจะลืม .set() หรือ Key ไม่ตรง)`,
-      );
-      console.log(
-        'ปัจจุบันมีห้องในระบบ:',
-        Array.from(this.RoomStateService.roomSessions.keys()),
-      );
+      // console.log(
+      //   `⚠️ ไม่พบสมาชิกในห้อง ${roomId} ใน Map (อาจจะลืม .set() หรือ Key ไม่ตรง)`,
+      // );
+      // console.log(
+      //   'ปัจจุบันมีห้องในระบบ:',
+      //   Array.from(this.RoomStateService.roomSessions.keys()),
+      // );
       return;
     }
-    console.log(
-      `✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.participants?.size} คน`,
-    );
+    // console.log(
+    //   `✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.participants?.size} คน`,
+    // );
     const payload = JSON.stringify(message);
     console.log(payload);
 
