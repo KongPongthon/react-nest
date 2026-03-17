@@ -199,7 +199,6 @@ export class RoomsGateway {
             description?: string;
             link?: string;
           };
-          console.log('=== DEBUG create-card ===');
 
           if (!createCardPayload.roomId) return;
 
