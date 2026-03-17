@@ -63,12 +63,15 @@ export interface Participant {
   joinedAt: Date;
 }
 
-interface CardMeta {
+export interface CardMeta {
   cardId: string;
   title: string;
-  description?: string;
   createdBy: string;
   createdAt: Date;
+  status: 'now' | 'again' | 'issue';
+  score?: number;
+  description?: string;
+  link?: string;
 }
 
 interface RoundSession {
@@ -84,7 +87,7 @@ export interface RoomSession {
   hostId: string;
   participants: Map<string, Participant>;
   seats: Map<number, SeatInfo[]>;
-  cards?: Map<string, CardMeta>;
+  cards: Map<string, CardMeta[]>;
   activeCardId?: string;
   activeRound?: RoundSession;
 }

@@ -1,6 +1,7 @@
 import { Body, Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
 import {
+  CardMeta,
   Participant,
   RoomSession,
   SeatInfo,
@@ -29,6 +30,7 @@ export class RoomsService {
         hostId: id,
         participants: new Map<string, Participant>(),
         seats: new Map<number, SeatInfo[]>(),
+        cards: new Map<string, CardMeta[]>
       };
       this.RoomStateService.roomSessions.set(roomId.toString(), newRoom);
       // this.RoomStateService.roomMembers.set(roomId.toString(), new Set());

@@ -6,5 +6,5 @@ export const Route = createFileRoute('/_protect/poker/$id/')({
 })
 
 function RouteComponent() {
-  return <div className='h-full w-full p-10'><RoomPoker /></div>
+  return <div className='h-full w-full'><RoomPoker /></div>
 }

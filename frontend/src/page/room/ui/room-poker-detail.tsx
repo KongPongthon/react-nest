@@ -160,7 +160,6 @@ export function RoomPokerDetail() {
                 //     )}
                 //     {person.userName.charAt(0)}
                 //   </div>
-
                 //   <div className="mt-2 bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-[10px] text-white whitespace-nowrap">
                 //     {person.userName}
                 //   </div>

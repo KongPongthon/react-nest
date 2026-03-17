@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
-import { WebSocketMessage } from './rooms.interface';
+import { CardMeta, WebSocketMessage } from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
@@ -20,7 +20,7 @@ export class RoomsGateway {
   constructor(
     private readonly RoomStateService: RoomStateService,
     private readonly RoomService: RoomsService,
-  ) { }
+  ) {}
 
   handleConnection(client: WebSocket, request: IncomingMessage) {
     const url = new URL(request.url ?? '', 'http://localhost');
@@ -162,14 +162,14 @@ export class RoomsGateway {
     if (!getRoom) return;
 
     getRoom.participants?.forEach((member) => {
-      console.log("member", member);
-      const userInroom = this.RoomStateService.socketByUser.get(member.userId)
-      if (!userInroom) return console.log("userInroom", userInroom);
+      console.log('member', member);
+      const userInroom = this.RoomStateService.socketByUser.get(member.userId);
+      if (!userInroom) return console.log('userInroom', userInroom);
       this.sendToClient(userInroom, {
         event: 'update-room',
         data: { username: member.username },
       });
-    })
+    });
   }
 
   private handleMessage(client: WebSocket, data: Buffer) {
@@ -192,6 +192,94 @@ export class RoomsGateway {
             this.RoomStateService.clients.has(client),
           );
           break;
+        case 'create-card': {
+          const createCardPayload = message.data as {
+            roomId: string;
+            title: string;
+            description?: string;
+            link?: string;
+          };
+          console.log('=== DEBUG create-card ===');
+
+          if (!createCardPayload.roomId) return;
+
+          const roomCreateCard = this.RoomStateService.roomSessions.get(
+            createCardPayload.roomId,
+          );
+
+          if (!roomCreateCard) return;
+
+          if (!roomCreateCard.cards) return;
+
+          const cardId = this.generateOption('card');
+
+          const newCard: CardMeta = {
+            cardId: cardId,
+            title: createCardPayload.title,
+            description: createCardPayload.description,
+            link: createCardPayload.link,
+            createdBy: clientId,
+            createdAt: new Date(),
+            status: 'issue',
+          };
+
+          if (roomCreateCard.cards.get(createCardPayload.roomId)) {
+            roomCreateCard.cards.get(createCardPayload.roomId)?.push(newCard);
+          } else {
+            roomCreateCard.cards.set(createCardPayload.roomId, [newCard]);
+          }
+
+          const card = roomCreateCard.cards.get(createCardPayload.roomId);
+
+          roomCreateCard.participants.forEach((member) => {
+            const userInroom = this.RoomStateService.socketByUser.get(
+              member.userId,
+            );
+            if (!userInroom) return console.log('userInroom', userInroom);
+            this.sendToClient(userInroom, {
+              event: 'create-card',
+              data: card,
+            });
+          });
+
+          break;
+        }
+        case 'select-card': {
+          const id = message.data as string;
+          console.log('Card ID:', id);
+
+          break;
+        }
+        case 'update-score': {
+          const updateScorePayload = message.data as {
+            roomId: string;
+            idConnect: string;
+          };
+          console.log('=== DEBUG update-score ===');
+          console.log(
+            'incoming client object id exists in clients map:',
+            this.RoomStateService.clients.has(client),
+            message.event,
+            updateScorePayload,
+          );
+          const roomUpdateScore = this.RoomStateService.roomSessions.get(
+            updateScorePayload.roomId,
+          );
+          if (!roomUpdateScore) return;
+
+          for (const [, seat] of roomUpdateScore.seats.entries()) {
+            const hasUser = seat.find(
+              (item) => item.userId === updateScorePayload.idConnect,
+            );
+            if (hasUser) {
+              console.log('Score Success');
+              console.log('Has User', hasUser);
+
+              break;
+            }
+          }
+          break;
+        }
         default:
           this.logger.warn(`Unknown event: ${message.event}`);
       }
@@ -242,11 +330,11 @@ export class RoomsGateway {
     console.log(payload);
 
     members.participants?.forEach((member) => {
-      console.log("member", member);
-      const userInroom = this.RoomStateService.socketByUser.get(member.userId)
-      if (!userInroom) return console.log("userInroom", userInroom);
+      console.log('member', member);
+      const userInroom = this.RoomStateService.socketByUser.get(member.userId);
+      if (!userInroom) return console.log('userInroom', userInroom);
       this.sendToClient(userInroom, message);
-    })
+    });
   }
 
   private broadcast(message: WebSocketMessage) {
@@ -273,7 +361,9 @@ export class RoomsGateway {
       const sessions = this.RoomStateService.roomSessions.get(roomId);
 
       if (!sessions) {
-        console.log(`❌ ไม่พบห้องสำหรับ ID: ${roomId} ${typeof roomId} sessions`);
+        console.log(
+          `❌ ไม่พบห้องสำหรับ ID: ${roomId} ${typeof roomId} sessions`,
+        );
         return;
       }
 
@@ -302,40 +392,45 @@ export class RoomsGateway {
         // นั่งที่ใหม่ (ถ้าที่นั้นว่าง)
         if (!seats.has(index)) {
           const role = sessions.hostId === id ? 'host' : 'guest';
-          seats.set(index, [{
-            userId: id,
-            userName: email,
-            index: index,
-            role: role,
-          }]);
+          seats.set(index, [
+            {
+              userId: id,
+              userName: email,
+              index: index,
+              role: role,
+            },
+          ]);
         }
       }
 
       const members = this.RoomStateService.roomSessions.get(roomId);
 
       members?.participants?.forEach((member) => {
-        console.log("member", member);
-        const userInroom = this.RoomStateService.socketByUser.get(member.userId)
-        if (!userInroom) return console.log("userInroom", userInroom);
+        // console.log("member", member);
+        const userInroom = this.RoomStateService.socketByUser.get(
+          member.userId,
+        );
+        if (!userInroom) return console.log('userInroom', userInroom);
         this.sendToClient(userInroom, {
           event: 'update-seats',
           data: {
             seats: members?.seats.get(index) ?? [],
           },
         });
-      })
-      return members?.seats.get(index) ?? []
-    }
-    catch (error) {
-      console.log("TESTERROR", error);
-
-
+      });
+      return members?.seats.get(index) ?? [];
+    } catch (error) {
+      console.log('TESTERROR', error);
     }
     // const oldRoomId = this.RoomStateService.
   }
 
   private generateClientId(): string {
     return `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private generateOption(value: string): string {
+    return `${value}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
   findSocketById(clientId: string): WebSocket | undefined {

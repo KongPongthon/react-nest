@@ -62,8 +62,8 @@ describe('Room-Table', () => {
     const mockRooms = [{ id: 101, roomCode: 'Room-A' }]
     renderWithProviders(<RoomTable rooms={mockRooms} />)
     fireEvent.click(screen.getByTestId('room-list-button'))
-    const selectBtn = screen.getByTestId('select-room-101')
-    fireEvent.click(selectBtn)
+
+    fireEvent.click(screen.getByTestId('select-room-101'))
     // expect(mockMutateAsync).toHaveBeenCalled()
   })
 })
