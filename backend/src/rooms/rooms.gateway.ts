@@ -405,7 +405,6 @@ export class RoomsGateway {
       const members = this.RoomStateService.roomSessions.get(roomId);
 
       members?.participants?.forEach((member) => {
-        // console.log("member", member);
         const userInroom = this.RoomStateService.socketByUser.get(
           member.userId,
         );
@@ -421,7 +420,6 @@ export class RoomsGateway {
     } catch (error) {
       console.log('TESTERROR', error);
     }
-    // const oldRoomId = this.RoomStateService.
   }
 
   private generateClientId(): string {
