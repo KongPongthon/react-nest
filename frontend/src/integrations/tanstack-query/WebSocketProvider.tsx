@@ -112,24 +112,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     wsRef.current = ws
   }, [])
 
-  const RefreshToken = async () => {
-    try {
-      const data_token = await authRefresh.mutateAsync({
-        refresh_token: localStorage.getItem('refresh_token') ?? '',
-        getScope: getScope(),
-      })
-
-      localStorage.setItem('refresh_token', data_token.refresh_token)
-      authLogin
-        .mutateAsync(data_token.access_token)
-        .then(() => router.navigate({ to: '/poker', replace: true }))
-        .catch(() => router.navigate({ to: `/`, replace: true }))
-    } catch (error) {
-      console.error(error)
-      throw error
-    }
-  }
-
   const send = useCallback(<T,>(event: string, data: T) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ event, data }))

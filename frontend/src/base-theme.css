@@ -30,7 +30,7 @@
 }
 
 @theme inline {
-  --font-sans: "Inter Variable", sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
 
   --color-background: var(--color-white);
   --color-foreground: var(--color-neutral-950);
@@ -104,4 +104,41 @@
   --color-secondary-900: var(--secondary-900);
 
   --color-linear: var(--linear);
+}
+
+@layer utilities {
+  /* แอนิเมชันขาเข้า: วิ่งขึ้นจากล่าง + ค่อยๆ ชัดขึ้น */
+  @keyframes slide-up-in {
+    from {
+      transform: translateY(100%); /* เริ่มที่ด้านล่างสุด */
+      opacity: 0;
+    }
+    to {
+      transform: translateY(
+        50%
+      ); /* จบที่ตำแหน่งเดิมที่คุณตั้งไว้ (translate-y-1/2) */
+      opacity: 1;
+    }
+  }
+
+  /* แอนิเมชันขาออก: วิ่งลง + ค่อยๆ จาง */
+  @keyframes slide-down-out {
+    from {
+      transform: translateY(50%);
+      opacity: 1;
+    }
+    to {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+
+  /* สร้าง Utility Class สำหรับเรียกใช้ */
+  .animate-poker-in {
+    animation: slide-up-in 0.7s ease-out forwards;
+  }
+
+  .animate-poker-out {
+    animation: slide-down-out 0.7s ease-in forwards;
+  }
 }

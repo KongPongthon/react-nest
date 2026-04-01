@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { Link, useParams } from '@tanstack/react-router'
+import { useParams } from '@tanstack/react-router'
 import { Edit, Plus } from 'lucide-react'
-import { useRoomPoker } from './hook'
 import {
   Dialog,
   DialogClose,
@@ -16,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/button'
 import { useEffect } from 'react'
+import { useCardIssue } from '../hook/hook-card-issue'
 
 export function CardIssue() {
   // const data = [
@@ -62,7 +62,8 @@ export function CardIssue() {
     form,
     cardIssue,
     handleSelectCardVote,
-  } = useRoomPoker()
+    handleStartVote,
+  } = useCardIssue()
 
   useEffect(() => {
     if (id) {
@@ -71,11 +72,13 @@ export function CardIssue() {
   }, [id])
 
   const openExternalSite = (path: string) => {
-    // เปิด Tab ใหม่ไปยัง Domain อื่น
     window.open(path, '_blank', 'noopener,noreferrer')
   }
   return (
     <div className="space-y-4 p-10">
+      <Button onClick={() => handleStartVote(id)} variant="default">
+        เริ่มโหวต
+      </Button>
       <div className="overflow-y-auto max-h-[calc(100vh-200px)] space-y-4">
         {cardIssue.map((item, index) => (
           <Card className="bg-gray-200 border-none text-lg" key={index}>
@@ -94,12 +97,9 @@ export function CardIssue() {
                 </Button>
                 <p>{item.description}</p>
                 <div className="flex justify-between">
-                  {/* <p className="border px-3 py-2 rounded-sm">
-                    Vote {item.status}
-                  </p> */}
                   <Button
-                    variant="outline"
-                    onClick={() => handleSelectCardVote(item.cardId)}
+                    variant={item.status === 'now' ? 'default' : 'outline'}
+                    onClick={() => handleSelectCardVote(item.cardId, id)}
                   >
                     Vote {item.status}
                   </Button>

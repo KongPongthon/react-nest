@@ -1,10 +1,10 @@
 import { useParams } from '@tanstack/react-router'
-import { useRoomPoker } from './hook'
+import { useCardVoice } from '../hook/hook-card-voice'
 
 export function CardVoice() {
   const { id } = useParams({ from: '/_protect/poker/$id/' })
   const scoreCard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-  const { handleSelectScoreCard } = useRoomPoker()
+  const { handleSelectScoreCard } = useCardVoice()
   return (
     <div className="flex gap-4 justify-center">
       {scoreCard.map((item) => (

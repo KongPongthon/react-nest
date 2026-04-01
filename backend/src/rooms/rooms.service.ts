@@ -1,17 +1,11 @@
 import { Body, Injectable } from '@nestjs/common';
 import { RoomStateService } from './rooms-state.service';
-import {
-  CardMeta,
-  Participant,
-  RoomSession,
-  SeatInfo,
-  UserConnectSocket,
-} from './rooms.interface';
+import { Participant, RoomSession, UserConnectSocket } from './rooms.interface';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly RoomStateService: RoomStateService) { }
+  constructor(private readonly RoomStateService: RoomStateService) {}
   getRoom(): RoomSession[] {
     const rooms = Array.from(
       this.RoomStateService.roomSessions.values(),
@@ -28,9 +22,6 @@ export class RoomsService {
         id: roomId,
         roomCode: roomCode,
         hostId: id,
-        participants: new Map<string, Participant>(),
-        seats: new Map<number, SeatInfo[]>(),
-        cards: new Map<string, CardMeta[]>
       };
       this.RoomStateService.roomSessions.set(roomId.toString(), newRoom);
       // this.RoomStateService.roomMembers.set(roomId.toString(), new Set());
@@ -51,9 +42,14 @@ export class RoomsService {
         return { error: 'Room not found' };
       }
 
-      const participants = Array.from(room.participants.values());
+      const participants = room.participants;
+      console.log('participants', participants);
 
-      return participants;
+      if (!participants) {
+        return { error: 'Room not found' };
+      }
+
+      return Array.from(participants.values());
     } catch (error) {
       console.log('errors', error);
       throw error;

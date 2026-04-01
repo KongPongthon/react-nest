@@ -61,7 +61,6 @@ export const apiAuthorized = async ({
 
 export const apiLogin = async (data: string) => {
   try {
-    console.log('API Verify', data, typeof data)
     const res = await client.post(
       '/auth',
       {},
@@ -84,7 +83,6 @@ export const apiLogin = async (data: string) => {
 export const getShortToken = async () => {
   try {
     const res = await client.get('/auth')
-    console.log('res.data', res.data)
     return res.data
   } catch (error) {
     console.log(error)

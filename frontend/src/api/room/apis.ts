@@ -25,7 +25,6 @@ export const apiJoinRoom = async (data: CreateRoomDto): Promise<string> => {
 export const apiGetRooms = async (): Promise<RoomList[]> => {
   try {
     const res = await client.get('/rooms')
-    console.log(res.data)
     return res.data
   } catch (err) {
     console.log(err)

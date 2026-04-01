@@ -60,7 +60,7 @@ export class RoomsController {
   constructor(
     private readonly RoomsService: RoomsService,
     private readonly RoomGateway: RoomsGateway,
-  ) { }
+  ) {}
 
   @UseGuards(AuthGuard)
   @Post()

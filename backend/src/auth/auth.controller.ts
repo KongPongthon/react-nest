@@ -78,6 +78,11 @@ export class AuthController {
 
       return {
         message: 'Login สำเร็จ',
+        user: {
+          id: user.sub,
+          name: user.name,
+          email: user.email,
+        },
         statusCode: 200,
       };
     } catch (error) {

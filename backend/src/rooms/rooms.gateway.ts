@@ -1,7 +1,12 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
-import { CardMeta, WebSocketMessage } from './rooms.interface';
+import {
+  CardMeta,
+  Participant,
+  SeatInfo,
+  WebSocketMessage,
+} from './rooms.interface';
 import { RoomStateService } from './rooms-state.service';
 import { RoomsService } from './rooms.service';
 import { IncomingMessage } from 'http';
@@ -66,12 +71,8 @@ export class RoomsGateway {
     this.RoomStateService.clients.set(client, userId);
     this.RoomStateService.socketByUser.set(userId, client);
 
-    this.logger.log(
-      `✅ Client connected: ${userId} (Total: ${this.RoomStateService.clients.size})`,
-    );
     try {
       const rooms = this.RoomService.getRoom();
-      this.logger.log(`📤 Sending ${rooms.length} rooms to ${userId}`);
 
       this.sendToClient(client, {
         event: 'rooms-list',
@@ -124,7 +125,6 @@ export class RoomsGateway {
     this.RoomStateService.userToRoom.delete(clientId);
   }
 
-  // 2. แก้ไข handleJoinRoom ให้เรียกใช้ฟังก์ชันกลาง
   handleJoinRoom(clientId: string, roomId: string, email: string) {
     console.log('roomId', roomId);
 
@@ -137,25 +137,24 @@ export class RoomsGateway {
     this.RoomStateService.userToRoom.set(clientId, roomId);
     // this.RoomStateService.roomMembers.get(roomId)?.add(clientId);
     const room = this.RoomStateService.roomSessions.get(roomId);
-    console.log(room?.participants);
 
     if (!room) {
+      this.logger.error('room not found');
       throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
     }
+
+    this.logger.debug(`Check room : ${JSON.stringify(room)}`);
+
     if (!room.participants) {
-      throw new HttpException('Room not found', HttpStatus.NOT_FOUND);
+      room.participants = new Map<string, Participant>();
     }
+
     room.participants.set(clientId, {
       userId: clientId,
       username: email,
       socketId: clientId,
       joinedAt: new Date(),
     });
-
-    // this.broadcastToRoom(roomId, {
-    //   event: 'join_room',
-    //   data: { username: email },
-    // });
 
     const getRoom = this.RoomStateService.roomSessions.get(roomId);
 
@@ -177,13 +176,7 @@ export class RoomsGateway {
       const message: WebSocketMessage = JSON.parse(
         data.toString(),
       ) as WebSocketMessage;
-
       const clientId = this.RoomStateService.clients.get(client) || 'unknown';
-      this.logger.log(
-        `📨 Message from ${clientId}: ${message.event} ${message.data}`,
-      );
-      // let roomId: string | undefined;
-      // let clientSocket: WebSocket | undefined;
       switch (message.event) {
         case 'leave_room':
           console.log('=== DEBUG leave_room ===');
@@ -202,13 +195,47 @@ export class RoomsGateway {
 
           if (!createCardPayload.roomId) return;
 
-          const roomCreateCard = this.RoomStateService.roomSessions.get(
+          const room = this.RoomStateService.roomSessions.get(
             createCardPayload.roomId,
           );
 
-          if (!roomCreateCard) return;
+          if (!room) return;
 
-          if (!roomCreateCard.cards) return;
+          if (!room.cards) {
+            room.cards = new Map<string, CardMeta>();
+          }
+          // room.
+
+          // const cardId = this.generateOption('card');
+
+          // const newCard: CardMeta = {
+          //   cardId: cardId,
+          //   title: createCardPayload.title,
+          //   description: createCardPayload.description,
+          //   link: createCardPayload.link,
+          //   createdBy: clientId,
+          //   createdAt: new Date(),
+          //   status: 'issue',
+          // };
+
+          // if (room.cards.get(createCardPayload.roomId)) {
+          //   room.cards.get(createCardPayload.roomId)?.push(newCard);
+          // } else {
+          //   room.cards.set(createCardPayload.roomId, [newCard]);
+          // }
+
+          // const card = room.cards.get(createCardPayload.roomId);
+
+          // room.participants.forEach((member) => {
+          //   const userInroom = this.RoomStateService.socketByUser.get(
+          //     member.userId,
+          //   );
+          //   if (!userInroom) return console.log('userInroom', userInroom);
+          //   this.sendToClient(userInroom, {
+          //     event: 'create-card',
+          //     data: card,
+          //   });
+          // });
 
           const cardId = this.generateOption('card');
 
@@ -222,30 +249,54 @@ export class RoomsGateway {
             status: 'issue',
           };
 
-          if (roomCreateCard.cards.get(createCardPayload.roomId)) {
-            roomCreateCard.cards.get(createCardPayload.roomId)?.push(newCard);
-          } else {
-            roomCreateCard.cards.set(createCardPayload.roomId, [newCard]);
-          }
+          room.cards.set(cardId, newCard);
 
-          const card = roomCreateCard.cards.get(createCardPayload.roomId);
+          const card = room.cards;
 
-          roomCreateCard.participants.forEach((member) => {
+          room.participants?.forEach((member) => {
             const userInroom = this.RoomStateService.socketByUser.get(
               member.userId,
             );
             if (!userInroom) return console.log('userInroom', userInroom);
             this.sendToClient(userInroom, {
               event: 'create-card',
-              data: card,
+              data: Array.from(card.values()),
             });
           });
-
           break;
         }
         case 'select-card': {
-          const id = message.data as string;
-          console.log('Card ID:', id);
+          const { cardId, roomId } = message.data as {
+            cardId: string;
+            roomId: string;
+          };
+          console.log('Card ID:', cardId, roomId);
+
+          const room = this.RoomStateService.roomSessions.get(roomId);
+          if (!room || !room.cards) return this.logger.error('room not found');
+
+          room.cards.forEach((card) => {
+            card.status = 'issue';
+          });
+
+          const cardOld = room?.cards.get(cardId);
+
+          if (!cardOld) return this.logger.error('card not found');
+          cardOld.status = 'now';
+          room.cards.set(cardId, cardOld);
+
+          const cardNew = room.cards;
+
+          room.participants?.forEach((member) => {
+            const userInroom = this.RoomStateService.socketByUser.get(
+              member.userId,
+            );
+            if (!userInroom) return console.log('userInroom', userInroom);
+            this.sendToClient(userInroom, {
+              event: 'create-card',
+              data: Array.from(cardNew.values()),
+            });
+          });
 
           break;
         }
@@ -266,17 +317,52 @@ export class RoomsGateway {
           );
           if (!roomUpdateScore) return;
 
-          for (const [, seat] of roomUpdateScore.seats.entries()) {
-            const hasUser = seat.find(
-              (item) => item.userId === updateScorePayload.idConnect,
-            );
-            if (hasUser) {
-              console.log('Score Success');
-              console.log('Has User', hasUser);
+          break;
+        }
+        case 'start-vote': {
+          console.log('start-vote', message.data);
+          const roomId = message.data as string;
+          const room = this.RoomStateService.roomSessions.get(roomId);
+          if (!room) return this.logger.error('room not found');
+          const expireAt = new Date();
+          room.cooldownVoteTime = expireAt;
+          room.duration = 15000;
+          console.log('Check Time', expireAt, 15000);
 
-              break;
-            }
-          }
+          const targetTime = expireAt.getTime() + 15000;
+          console.log('targetTime', targetTime);
+
+          room.participants?.forEach((member) => {
+            const userInroom = this.RoomStateService.socketByUser.get(
+              member.userId,
+            );
+            if (!userInroom) return console.log('userInroom', userInroom);
+            this.sendToClient(userInroom, {
+              event: 'start-vote',
+              data: targetTime,
+            });
+          });
+
+          break;
+        }
+        case 'stop-vote': {
+          console.log('stop-vote', message.data);
+          const roomId = message.data as string;
+          const room = this.RoomStateService.roomSessions.get(roomId);
+          if (!room) return this.logger.error('room not found');
+          room.cooldownVoteTime = null;
+          room.duration = 0;
+          room.participants?.forEach((member) => {
+            const userInroom = this.RoomStateService.socketByUser.get(
+              member.userId,
+            );
+            if (!userInroom) return console.log('userInroom', userInroom);
+            this.sendToClient(userInroom, {
+              event: 'start-vote',
+              data: 0,
+            });
+          });
+
           break;
         }
         default:
@@ -287,62 +373,10 @@ export class RoomsGateway {
     }
   }
 
-  handleNotifyUpdate<T>(event: string, data: T) {
-    this.broadcast({
-      event: event,
-      data: data,
-    });
-  }
-
-  handleNOtifyRoomUpdate<T>(roomId: string, event: string, data: T) {
-    this.broadcastToRoom(roomId, {
-      event: event,
-      data: data,
-    });
-  }
-
   private sendToClient(client: WebSocket, message: WebSocketMessage) {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(message));
     }
-  }
-
-  private broadcastToRoom(roomId: string, message: WebSocketMessage) {
-    // console.log(
-    //   `📢 กำลังจะ Broadcast ไปที่ห้อง: ${roomId} (Type: ${typeof roomId})`,
-    // );
-    const members = this.RoomStateService.roomSessions.get(roomId);
-    if (!members) {
-      // console.log(
-      //   `⚠️ ไม่พบสมาชิกในห้อง ${roomId} ใน Map (อาจจะลืม .set() หรือ Key ไม่ตรง)`,
-      // );
-      // console.log(
-      //   'ปัจจุบันมีห้องในระบบ:',
-      //   Array.from(this.RoomStateService.roomSessions.keys()),
-      // );
-      return;
-    }
-    // console.log(
-    //   `✅ พบสมาชิกในห้อง ${roomId} จำนวน ${members.participants?.size} คน`,
-    // );
-    const payload = JSON.stringify(message);
-    console.log(payload);
-
-    members.participants?.forEach((member) => {
-      console.log('member', member);
-      const userInroom = this.RoomStateService.socketByUser.get(member.userId);
-      if (!userInroom) return console.log('userInroom', userInroom);
-      this.sendToClient(userInroom, message);
-    });
-  }
-
-  private broadcast(message: WebSocketMessage) {
-    const payload = JSON.stringify(message);
-    this.server.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(payload);
-      }
-    });
   }
 
   sitdownNew(index: number, id: string, email: string) {
@@ -366,45 +400,39 @@ export class RoomsGateway {
         return;
       }
 
-      const seats = sessions.seats;
-
-      if (!seats) {
-        console.log(
-          `❌ ไม่พบห้องสำหรับ ID: ${roomId} ${typeof roomId} sessions.seats`,
-        );
-        return;
+      if (!sessions.seats) {
+        sessions.seats = new Map<number, SeatInfo>();
       }
 
       // ลบที่นั่งเก่าของ user คนนี้ออกก่อน (ถ้ามี)
-      let oldSeatIndex: number | null = null;
-      for (const [seatIndex, seat] of seats.entries()) {
-        const hasUser = seat.some((item) => item.userId === id);
+      let oldSitIndex: number | null = null;
+      for (const [seatIndex, seat] of sessions.seats.entries()) {
+        const hasUser = seat.userId === id;
         if (hasUser) {
-          oldSeatIndex = seatIndex;
-          seats.delete(seatIndex);
+          oldSitIndex = seatIndex;
+          sessions.seats.delete(seatIndex);
           break;
         }
       }
 
       // ถ้ากดที่เดิม → toggle ออก แล้วหยุดเลย ไม่ต้องนั่งใหม่
-      if (oldSeatIndex !== index) {
+      if (oldSitIndex !== index) {
         // นั่งที่ใหม่ (ถ้าที่นั้นว่าง)
-        if (!seats.has(index)) {
+        if (!sessions.seats.has(index)) {
           const role = sessions.hostId === id ? 'host' : 'guest';
-          seats.set(index, [
-            {
-              userId: id,
-              userName: email,
-              index: index,
-              role: role,
-            },
-          ]);
+          sessions.seats.set(index, {
+            userId: id,
+            userName: email,
+            index: index,
+            role: role,
+          });
         }
       }
 
-      const members = this.RoomStateService.roomSessions.get(roomId);
+      if (!sessions.participants || !sessions.seats) return;
 
-      members?.participants?.forEach((member) => {
+      const seats = sessions.seats;
+      sessions.participants.forEach((member) => {
         const userInroom = this.RoomStateService.socketByUser.get(
           member.userId,
         );
@@ -412,14 +440,42 @@ export class RoomsGateway {
         this.sendToClient(userInroom, {
           event: 'update-seats',
           data: {
-            seats: members?.seats.get(index) ?? [],
+            seats: Array.from(seats.values()),
           },
         });
       });
-      return members?.seats.get(index) ?? [];
+
+      // members.participants?.forEach((member) => {
+      //   const userInroom = this.RoomStateService.socketByUser.get(
+      //     member.userId,
+      //   );
+      //   if (!userInroom) return console.log('userInroom', userInroom);
+      //   this.sendToClient(userInroom, {
+      //     event: 'update-seats',
+      //     data: {
+      //       seats: members?.seats.get(index) ?? [],
+      //     },
+      //   });
+      // });
     } catch (error) {
       console.log('TESTERROR', error);
     }
+  }
+
+  handleNotifyUpdate<T>(event: string, data: T) {
+    this.broadcast({
+      event: event,
+      data: data,
+    });
+  }
+
+  private broadcast(message: WebSocketMessage) {
+    const payload = JSON.stringify(message);
+    this.server.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    });
   }
 
   private generateClientId(): string {
@@ -428,14 +484,5 @@ export class RoomsGateway {
 
   private generateOption(value: string): string {
     return `${value}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  findSocketById(clientId: string): WebSocket | undefined {
-    for (const [socket, id] of this.RoomStateService.clients.entries()) {
-      if (id === clientId) {
-        return socket;
-      }
-    }
-    return undefined;
   }
 }

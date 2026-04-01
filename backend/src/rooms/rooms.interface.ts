@@ -85,9 +85,15 @@ export interface RoomSession {
   id: number;
   roomCode: string;
   hostId: string;
-  participants: Map<string, Participant>;
-  seats: Map<number, SeatInfo[]>;
-  cards: Map<string, CardMeta[]>;
+  // userId -> participants
+  participants?: Map<string, Participant>;
+  // indexSitdow -> SeatInfo
+  seats?: Map<number, SeatInfo>;
+  // cardId -> cards
+  cards?: Map<string, CardMeta>;
   activeCardId?: string;
   activeRound?: RoundSession;
+  // time Cooldown vote
+  cooldownVoteTime?: Date | null;
+  duration?: number;
 }

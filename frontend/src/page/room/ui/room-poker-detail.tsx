@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { Crown, Plus } from 'lucide-react'
-import { useRoomPoker } from './hook'
+import { useRoomPoker } from '../hook/hook-poker'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 

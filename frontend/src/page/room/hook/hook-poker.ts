@@ -1,12 +1,11 @@
 import { useSitdown } from '@/api/room/hook/mutation'
 import { useGetUserInRoom } from '@/api/room/hook/quries'
 import { useWebSocket } from '@/hooks/useWebSocket'
-import { useForm } from '@tanstack/react-form'
+import { useAuthStore } from '@/store/auth-store'
 import { useRouter } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
-
 interface Person {
-  id: string
+  userId: string
   userName: string
   role: string
   index: number
@@ -21,38 +20,17 @@ export function useRoomPoker() {
   const MAX_SEATS = 10
   const sitdown = useSitdown()
   const [peopleJoinRoom, setPeopleJoinRoom] = useState<Person[]>([])
-  const [isOpenCardIssue, setIsOpenCardIssue] = useState<boolean>(false)
-  const [cardIssue, setCardIssue] = useState<any[]>([])
 
   const [scoreCard, setScoreCard] = useState<number>(0)
 
   const { send } = useWebSocket()
   const router = useRouter()
 
+  const { user } = useAuthStore()
+  const [serverTime, setServerTime] = useState(0)
   const { data: peopleInRoom } = useGetUserInRoom({
     variables: id,
     enabled: !!id,
-  })
-
-  const form = useForm({
-    defaultValues: {
-      id: '',
-      title: '',
-      link: '',
-      description: '',
-    },
-    onSubmit: async ({ value }) => {
-      // นี่คือจุดที่ Logic ทำงานต่อหลังจากกด Save
-      console.log('Form Submitted:', value)
-      send('create-card', {
-        title: value.title,
-        link: value.link,
-        description: value.description,
-        roomId: value.id,
-      })
-      // ทำการเรียก API หรือปิด Dialog ตรงนี้
-      setIsOpenCardIssue(false)
-    },
   })
 
   useEffect(() => {
@@ -72,15 +50,14 @@ export function useRoomPoker() {
       setPeopleJoinRoom(data)
     })
 
-    const unsubscribeCreateCard = on('create-card', (data) => {
-      console.log('📋 Received create Card:', data)
-      // setPeopleJoinRoom(data)
-      setCardIssue(data)
+    const unsubscribeStartVote = on('start-vote', (data) => {
+      console.log('📋 Received start Vote:', data)
+      setServerTime(data)
     })
     return () => {
       unsubscribeSitdown()
       unsubscribeJoinRoom()
-      unsubscribeCreateCard()
+      unsubscribeStartVote()
     }
   }, [on])
 
@@ -104,12 +81,11 @@ export function useRoomPoker() {
 
   const handleSitdown = async (index: number) => {
     try {
-      const data = await sitdown.mutateAsync({
+      await sitdown.mutateAsync({
         indexChair: index.toString(),
         idConnect: idConnect,
         roomId: id,
       })
-      console.log(data)
     } catch (error) {
       console.log(error)
     }
@@ -121,8 +97,6 @@ export function useRoomPoker() {
   }
 
   const handleSelectScoreCard = (score: number, id: string) => {
-    console.log('Score', score, id)
-
     setScoreCard(score)
     send('update-score', {
       score,
@@ -131,14 +105,12 @@ export function useRoomPoker() {
     })
   }
 
-  const handleSelectCardIssue = () => {
-    setIsOpenCardIssue(!isOpenCardIssue)
-  }
-
-  const handleSelectCardVote = (id: string) => {
-    console.log('ID Card :', id)
-    send('select-card', id)
-  }
+  const isOwner = useMemo(() => {
+    console.log('user', user)
+    console.log('peopleSitdown', peopleSitdown)
+    if (!user) return false
+    return peopleSitdown.find((p) => p.userId === user?.id)
+  }, [peopleSitdown, user.id])
 
   return {
     memberSitDown,
@@ -149,10 +121,7 @@ export function useRoomPoker() {
     peopleJoinRoom,
     handleSelectScoreCard,
     scoreCard,
-    handleSelectCardIssue,
-    isOpenCardIssue,
-    form,
-    cardIssue,
-    handleSelectCardVote,
+    serverTime,
+    isOwner,
   }
 }
