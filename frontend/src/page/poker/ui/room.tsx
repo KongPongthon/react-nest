@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useGetRooms } from '@/api/room/hook/quries'
 import { RoomList } from '@/api/room/types'
-import RoomTable from './component/room-table'
-import BaseAlert from '@/components/base-alert'
+import RoomTable from './room-table'
 
 export function Room() {
   const [rooms, setRooms] = useState<RoomList[]>([])

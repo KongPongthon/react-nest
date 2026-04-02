@@ -104,7 +104,6 @@ function getPageNumbers(
 function BaseTable<TData extends object>({
   columns,
   data,
-  totalCount = 0,
   totalPage: totalPageProp = 1,
   onSearch,
   searchPlaceholder = 'ค้นหา...',

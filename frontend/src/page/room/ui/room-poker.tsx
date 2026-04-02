@@ -43,12 +43,9 @@ export function RoomPoker() {
             <div
               className={cn(
                 'translate-y-1/3 z-10 duration-700 transition-all hidden',
-                serverTime > 1
+                isOwner && serverTime > 1
                   ? 'opacity-100 pointer-events-auto animate-poker-in block'
                   : 'opacity-0 pointer-events-none animate-poker-out hidden',
-                isOwner
-                  ? 'block'
-                  : 'animate-poker-out opacity-0 pointer-events-none hidden',
               )}
             >
               <CardVoice />

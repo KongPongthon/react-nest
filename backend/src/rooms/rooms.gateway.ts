@@ -326,7 +326,7 @@ export class RoomsGateway {
           if (!room) return this.logger.error('room not found');
           const expireAt = new Date();
           room.cooldownVoteTime = expireAt;
-          room.duration = 15000;
+          room.duration = 15000; //15s
           console.log('Check Time', expireAt, 15000);
 
           const targetTime = expireAt.getTime() + 15000;

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 import { RoomForm } from './room-form'
 import { RoomList } from '@/api/room/types'
-import { useRoom } from '../hook'
+import { useRoom } from '../hook/hook-room'
 import BaseTable from '@/components/base-table'
 interface RoomTableProps {
   rooms: RoomList[]

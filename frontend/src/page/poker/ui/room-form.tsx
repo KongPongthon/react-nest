@@ -2,13 +2,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { Plus, Users } from 'lucide-react'
-import { useRoom } from '../hook'
 import { Button } from '@/components/button'
+import { CreateRoom } from './create-room'
+import { useForm } from '../hook/hook-form'
 interface RoomFormProps {
   name: string
 }
 export function RoomForm({ name }: RoomFormProps) {
-  const { mode, setMode, roomCode, setRoomCode, handleSubmit } = useRoom()
+  const {
+    mode,
+    setMode,
+    roomCode,
+    setRoomCode,
+    handleSubmit,
+    openCreateRoom,
+    handleCloseCreate,
+  } = useForm()
   return (
     <div>
       <div className="w-full h-full flex items-center justify-center">
@@ -43,35 +52,6 @@ export function RoomForm({ name }: RoomFormProps) {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* <div className="space-y-2">
-              <Label htmlFor="name" className="text-foreground">
-                ชื่อของคุณ
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="ใส่ชื่อของคุณ"
-                className="bg-card border-border focus:border-primary"
-                required
-              />
-            </div> */}
-
-            {/* {mode === 'create' ? (
-              <div className="space-y-2">
-                <Label htmlFor="topic" className="text-foreground">
-                  หัวข้อที่จะโหวต
-                </Label>
-                <Input
-                  id="topic"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                  placeholder="เช่น: User Story #123"
-                  className="bg-card border-border focus:border-primary"
-                  required
-                />
-              </div>
-            ) : ( */}
             {mode === 'join' && (
               <div className="space-y-2">
                 <Label htmlFor="roomCode" className="text-foreground">
@@ -99,6 +79,7 @@ export function RoomForm({ name }: RoomFormProps) {
           </form>
         </div>
       </div>
+      <CreateRoom isOpen={openCreateRoom} onClose={handleCloseCreate} />
     </div>
   )
 }

@@ -12,3 +12,11 @@ export function formatShortTime(ms: number | null | undefined) {
   const ss = String(totalSeconds % 60).padStart(2, '0')
   return `${mm}:${ss}`
 }
+
+export function isConnectSocket(status: boolean): boolean {
+  if (!status) {
+    console.log('please refresh page')
+    return false
+  }
+  return true
+}
