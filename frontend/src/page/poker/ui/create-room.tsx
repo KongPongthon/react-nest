@@ -9,8 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useFormCreate } from '../hook/hook-form-create'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
+import BaseFormInput from '@/components/custom-ui/BaseFormInput'
 
 interface CreateRoomProps {
   isOpen: boolean
@@ -27,21 +26,17 @@ export function CreateRoom({ isOpen, onClose }: CreateRoomProps) {
             e.preventDefault()
             form.handleSubmit()
           }}
+          className="space-y-2"
         >
           <DialogHeader>
             <DialogTitle>Create Room</DialogTitle>
             <DialogDescription>
-              {/* Create a new room to play poker with your friends. */}
-
-              <div className="space-y-2">
-                <Label htmlFor="name">Room Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={form.state.values.name}
-                  onChange={(e) => form.setFieldValue('name', e.target.value)}
-                />
-              </div>
+              <form.Field
+                name="name"
+                children={(field) => (
+                  <BaseFormInput field={field} name="name" title="ชื่อห้อง" />
+                )}
+              />
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

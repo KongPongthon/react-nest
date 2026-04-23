@@ -1,8 +1,6 @@
 // src/providers/WebSocketProvider.tsx
-import { useAuthLogin, useAuthRefresh } from '@/api/auth/hook/mutation'
 import { useGetShortToken } from '@/api/auth/hook/quries'
 import { API_URL_SOCKET } from '@/constants'
-import { getScope } from '@/lib/oauth-script'
 import { useRouter } from '@tanstack/react-router'
 import React, {
   createContext,
@@ -41,8 +39,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
   )
 
   const [idConnect, setIdConnect] = useState<string>('')
-  const authLogin = useAuthLogin()
-  const authRefresh = useAuthRefresh()
   const maxReconnectAttempts = 5
   const { data, isSuccess } = useGetShortToken()
   const token = isSuccess && data ? data : null

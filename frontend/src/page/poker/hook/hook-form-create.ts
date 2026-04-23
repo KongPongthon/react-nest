@@ -6,13 +6,12 @@ export const useFormCreate = ({ onClose }: UseFormCreateProps) => {
   const form = useForm({
     defaultValues: {
       name: '',
-      time: 15,
-      type: 'fibonacci',
     },
     validators: {
-      onChange: () => {
-        onClose()
-      },
+      onSubmit: () => {},
+    },
+    onSubmit: () => {
+      onClose()
     },
   })
 
